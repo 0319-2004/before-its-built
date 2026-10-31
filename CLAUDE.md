@@ -34,7 +34,10 @@ PLATEAU の3D都市モデルの上に立ち上げる。
 **tileset の URL は `web/src/tilesets.ts` に集約**。他の場所に書かない。
 目黒区は再現性のため2025年度に固定してある。
 
-**`scripts/convert_plateau.sh`** — CityGML の自前変換。公式配信が落ちたとき用の保険。
+**`scripts/convert_plateau.sh`** — CityGML を GeoJSON に変換する。
+用途は**サーバー側の計算専用**（`data/PLATEAU/bldg.geojson` 14,334棟、`tran.geojson`）。
+同時に出る自前の3D Tiles は表示に使わない。公式配信が落ちたときの退避先も、
+自前変換ではなく公式のテクスチャ無しデータ（33.5MB）を置き直す。
 手順と出典は `docs/data-prep.md`。
 
 ## 次にやること
