@@ -6,6 +6,24 @@
 変換は `scripts/convert_plateau.sh` にまとめてあるので、
 通常はそれを実行するだけでよい。以下はその中身と前提の説明。
 
+> **広域の建物は自前変換を使わない。**
+> 画面に出す建物は PLATEAU 配信サービスの公式3D Tilesを直接読んでいる
+> （URLは `web/src/tilesets.ts`）。ここで変換した 3D Tiles は、
+> 公式配信が使えなくなったときの保険という位置づけ。
+> 切り替え手順は[公式配信が落ちたときの代替](#公式配信が落ちたときの代替)を参照。
+> GeoJSON（`bldg.geojson` / `tran.geojson`）は日影計算の入力として引き続き使う。
+
+公式配信を NAVARA (`@navaramap/three`) で表示したところ:
+
+| | |
+|---|---|
+| ![目黒区 LOD2](images/meguro-lod2-overview.jpg) | ![中目黒 近景](images/naka-meguro-lod2-closeup.jpg) |
+| 目黒区全域 LOD2（`13110-bldg-lod2-2025`） | 中目黒駅上空180m。テクスチャが乗っている |
+
+![東京都全域](images/tokyo-maxlod2.jpg)
+
+東京都全域（`13-bldg-maxlod2-latest`、親1 + 子62 の複合tileset）。
+
 ## 出典
 
 **3D都市モデル（Project PLATEAU）目黒区（2025年度）** — 国土交通省
@@ -204,7 +222,79 @@ def building_height(props):
 `buildingDisasterRiskAttribute` など）は入れ子構造のため、
 **JSON文字列として格納される**。使うときは `json.loads()` でパースが必要。
 
+## 公式配信が落ちたときの代替
+
+**まだ実行していない。公式配信が使えなくなってから着手する手順。**
+
+平常時、画面の建物は PLATEAU 配信サービスの公式3D Tilesを直接読んでいる。
+URLは `web/src/tilesets.ts` に集約してあり、目黒区は**2025年度に固定**している
+（`13110-bldg-lod2-2025`）。`latest` を使わないのは、年度更新で中身が
+入れ替わると日影の計算結果や評価の再現性が崩れるため。
+東京都全域の背景だけは `13-bldg-maxlod2-latest` のままでよい。
+
+配信元は次の2ホストに依存していて、可用性のSLAは公表されていない。
+
+- `api.plateauview.mlit.go.jp` — 親 tileset.json（複数の子を束ねるラッパー）
+- `assets.cms.plateau.reearth.io` — 子 tileset.json と b3dm タイルの実体
+
+どちらかが落ちたら、以下の手順で自前ホストに切り替える。
+
+### 1. 公式データを落とす
+
+**自前変換した 3D Tiles ではなく、公式が配信している目黒区のデータを使う。**
+自前変換（3D Tiles 1.1 + glb、242MB）は形式が別物で、
+差し替えるとローダ側の挙動まで変わってしまう。公式と同じ
+3D Tiles 1.0 + b3dm のまま置き場所だけ替えるほうが影響が小さい。
+
+使うのは `13110_bldg_lod2_no_texture`（**33.5MB**）。
+テクスチャ無しを選ぶのは、容量が LOD2 テクスチャ付き（42.0MB）より小さく、
+`EXT_texture_webp` への依存も外れるため。
+
+データカタログAPIで現在のURLを引く:
+
+```sh
+curl -s https://api.plateauview.mlit.go.jp/datacatalog/plateau-datasets \
+  | python3 -c "
+import json,sys
+for r in json.load(sys.stdin)['datasets']:
+    if r.get('city_code')=='13110' and r.get('type_en')=='bldg':
+        print(r['id'], r['year'], round(r['file_size']/1e6,1), r['url'])
+"
+```
+
+`13110_bldg_lod2_no_texture` の行の URL が子 tileset.json。
+その tileset.json と、同階層の `data/*.b3dm`（202ファイル）を丸ごと取得する。
+親の tileset.json は子を1つ指すだけのラッパーなので、子を直接配信すればよい。
+
+### 2. Cloudflare R2 に置く
+
+バケットに `plateau/13110-bldg-lod2-notexture-2025/` のような
+年度入りのプレフィックスで配置する（year-pinned の性質を保つため）。
+
+- `tileset.json` 内の `content.uri` は `data/dataN.b3dm` の**相対パス**なので、
+  ディレクトリ構造をそのまま保てば書き換え不要
+- ブラウザから読むので **CORS で `Access-Control-Allow-Origin` を許可**する。
+  公式配信は親子とも `*` を返している
+- b3dm は `Content-Type: application/octet-stream` で返す
+
+### 3. URLを差し替える
+
+`web/src/tilesets.ts` を編集せず、環境変数で切り替える。
+
+```sh
+VITE_MEGURO_TILESET_URL=https://<r2-public-domain>/plateau/13110-bldg-lod2-notexture-2025/tileset.json npm run dev
+```
+
+`.env` に書いてもよい。東京都全域を差し替える場合は
+`VITE_TOKYO_TILESET_URL` を使う。
+
+出典表示は配信元に依存しないので、差し替えても変更不要
+（`ATTRIBUTION` は `web/src/tilesets.ts`、画面表示は `web/index.html` の `#credit`）。
+ライセンス上、自前ホストから配信する場合も出典表示は必要。
+
 ## リポジトリに入れないもの
 
 `data/` は `.gitignore` 済み。CityGML の原本も変換後の成果物もコミットしない。
 各自 `scripts/convert_plateau.sh` を実行して手元で生成する。
+
+`web/node_modules/` も同様。`package-lock.json` はコミットする。

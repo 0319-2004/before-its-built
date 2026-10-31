@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PLATEAU 公式3D Tiles 表示テスト（中目黒）</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #0b0d10;
+        color: #e6e6e6;
+        font: 13px/1.6 system-ui, sans-serif;
+      }
+      #app {
+        position: absolute;
+        inset: 0;
+      }
+      #hud {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        z-index: 10;
+        max-width: 46ch;
+        padding: 8px 10px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.66);
+        white-space: pre-wrap;
+        pointer-events: none;
+      }
+      #hud .err {
+        color: #ff8080;
+      }
+      #credit {
+        position: absolute;
+        right: 8px;
+        bottom: 8px;
+        z-index: 10;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.6);
+        font-size: 11px;
+        color: #f0f0f0;
+      }
+      #credit a {
+        color: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="hud">起動中…</div>
+    <!-- 出典表示。PLATEAU のライセンス上必須なので、
+         JS の初期化が失敗しても出るよう HTML に直接書いている。 -->
+    <div id="credit">
+      <a
+        href="https://www.geospatial.jp/ckan/dataset/plateau-13110-meguro-ku-2025"
+        target="_blank"
+        rel="noopener"
+        >3D都市モデル（Project PLATEAU）目黒区（2025年度）/ 国土交通省
+        を加工して作成</a
+      >
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
