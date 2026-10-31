@@ -33,6 +33,12 @@ PLATEAU の3D都市モデルの上に立ち上げる。
 ブラウザで表示確認済み（`npm run dev`）。
 **tileset の URL は `web/src/tilesets.ts` に集約**。他の場所に書かない。
 目黒区は再現性のため2025年度に固定してある。
+`src/stage0.ts` は段階0（計画建物＝青／解体建物＝オレンジ）。`?stage=0` で出る。
+
+**3Dに置く高さは楕円体高**。標高（b3dmの`_zmin`など）を使うと目黒区では
+36.7m沈んで見えなくなる。`bldg.geojson` のZはそのまま使ってよい。
+表示用の3D Tilesと計算用のGeoJSONは **`gml_id`** でつなぐ。
+実測と確認の手順は `docs/stage0.md`。
 
 **`scripts/convert_plateau.sh`** — CityGML を GeoJSON に変換する。
 用途は**サーバー側の計算専用**（`data/PLATEAU/bldg.geojson` 14,334棟、`tran.geojson`）。
@@ -42,4 +48,6 @@ PLATEAU の3D都市モデルの上に立ち上げる。
 
 ## 次にやること
 
-計画建物（青）と解体建物（オレンジ）を3Dで重ねて表示する。
+段階0（手で作った1棟）は済んだ。次は実データにつなぐ:
+届出から出した位置と規模で計画建物を立て、解体名簿の住所から
+解体される建物を `bldg.geojson` で特定してオレンジにする。

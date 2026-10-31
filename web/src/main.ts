@@ -12,6 +12,11 @@
  *   http://localhost:5173/?set=lod2NoTexture
  *   http://localhost:5173/?set=tokyo
  *
+ * 段階0（計画建物＝青／解体建物＝オレンジ）を重ねる:
+ *   http://localhost:5173/?stage=0
+ *   http://localhost:5173/?stage=0&baseZ=0     基準面を間違えた場合
+ *   http://localhost:5173/?stage=0&overlap=1   既存建物に重ねてZファイティングを見る
+ *
  * tileset の URL は src/tilesets.ts に集約してある。
  */
 import ThreeView from "@navaramap/three";
@@ -20,6 +25,7 @@ import {
   type DefaultDescriptions,
 } from "@navaramap/three-default-plugin";
 
+import { addStage0 } from "./stage0";
 import {
   ATTRIBUTION,
   ATTRIBUTION_URL,
@@ -39,6 +45,7 @@ const diag = {
   tilesetUrl: "",
   errors: [] as string[],
   logs: [] as string[],
+  stage0: null as unknown,
 };
 (window as any).__diag = diag;
 
@@ -115,8 +122,24 @@ async function main() {
 
   // 本題: 公式配信の 3D Tiles
   const source = view.addSource({ type: "3d-tiles", url });
-  view.addLayer({ type: "3d-tiles", source });
+  const tilesLayer = view.addLayer({ type: "3d-tiles", source });
   log("3d-tiles レイヤ追加");
+
+  // 段階0: 計画建物（青）と解体建物（オレンジ）を重ねる。
+  if (params.get("stage") === "0") {
+    try {
+      const baseZ = params.has("baseZ") ? Number(params.get("baseZ")) : undefined;
+      const s0 = addStage0(view, tilesLayer as any, {
+        baseZ,
+        overlap: params.get("overlap") === "1",
+        hidePlanned: params.get("planned") === "0",
+      });
+      diag.stage0 = s0;
+      log(`段階0: 計画建物 base=${s0.baseZ}m top=${s0.extrudedZ}m`);
+    } catch (e) {
+      fail("stage0", e);
+    }
+  }
 
   // NAVARA 内蔵の出典UIにも登録しておく。
   // ただし画面表示は index.html の #credit に固定で出している
