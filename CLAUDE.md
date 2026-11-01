@@ -33,7 +33,8 @@ PLATEAU の3D都市モデルの上に立ち上げる。
 | `extract_filings.py` | 届出PDFを1ページ1件として読み、確認用CSVにする |
 | `evaluate.py` | 読み取り結果を届出と照合し、項目ごとの精度を数える |
 | `make_verify_page.py` | 届出の目視確認用のページ（`data/eval/verify.html`）を作る |
-| `make_planned_geojson.py` | 届出から計画建物のボリュームを作る（`data/planned/planned.geojson`） |
+| `make_planned_geojson.py` | 届出から計画建物のボリュームを作る（`web/public/planned.geojson`） |
+| `make_demolition_geojson.py` | 解体名簿から壊される建物をPLATEAUの中で絞る（`web/public/demolition.json`） |
 
 **比べる前に必ず `normalize.py` を通す。** 看板側と届出側を違う規則でそろえると
 精度が測れない。そろえ方を変えるときはこのファイルだけを直す。
@@ -60,6 +61,14 @@ PLATEAU の3D都市モデルの上に立ち上げる。
 目黒区は再現性のため2025年度に固定してある。
 `src/stage0.ts` は段階0（計画建物＝青／解体建物＝オレンジ）。`?stage=0` で出る。
 `src/stage1.ts` は段階1（届出から出した計画建物＝青）。`?stage=1` で出る。
+`src/stage2.ts` は段階2（＋解体建物＝オレンジ）。`?stage=2` で出る。手順は `docs/stage2.md`。
+**公開URL: https://0319-2004.github.io/before-its-built/** （`main` への push で自動デプロイ）。
+
+解体の特定は、号の位置が無いので**街区の中の候補の順位付け**でしかない。
+`confident` が false のときは1棟に決めず、候補を薄く並べる。
+PLATEAUの階数は当てにならない（30.8mの建物に「2階」が入っている）ので
+高さからの推定と併用する。`fireproofStructureType` の「準耐火」は
+「耐火」を文字として含むので部分一致で見ない。
 **太陽の位置は既定が今の時刻で、夜に開くと建物が真っ黒になる**
 （地図のラスタだけが見えて「タイルが出ていない」ように見える）。
 `?time=10` で現地の視太陽時を渡す。手順と実測は `docs/stage1.md`。
@@ -86,9 +95,9 @@ dev では出るのにビルドでは街並みが丸ごと消える、という�
 
 ## 次にやること
 
-段階1（届出から計画建物の青）は済んだ（68件中38件。残りは `bldg.geojson` の
-4メッシュの外）。次は:
+段階1（青）と段階2（オレンジ）は済み、GitHub Pages に出ている。次は:
 
-- 解体名簿の住所から、解体される建物を `bldg.geojson` で特定してオレンジにする
 - 形を最寄りの道路に沿わせる（今は北向きの正方形。`tran.geojson` を使う）
+- 日影（冬至・地上1.5m。太陽は `view.atmosphere.setSolarTime()`）
 - 届出の目視確認（`verify.html`。まだ0件なので全部「確認前」のまま）
+- 中目黒3-5-8 のように解体が1棟に決まらない件の見せ方

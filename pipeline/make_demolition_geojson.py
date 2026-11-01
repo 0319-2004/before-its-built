@@ -3,7 +3,8 @@
 解体工事等標識設置届の名簿から「どこで・どんな建物が壊されるか」を取り、
 その街区の中の候補を、**階数・床面積・耐火性能・街区からの距離**で絞る。
 
-    python pipeline/make_demolition_geojson.py 中目黒3-5-8
+    python pipeline/make_demolition_geojson.py 中目黒3-4-11
+    python pipeline/make_demolition_geojson.py --scan   # 1棟に決まる場所を探す
 
 出力は **`web/public/demolition.json`**（gml_id と、なぜそう判断したか）。
 表示側は gml_id で公式3D Tiles の建物を塗り替える（dev-policy §15）。
@@ -187,16 +188,10 @@ def score(notice: dict, building: dict) -> tuple[float, list[str]]:
     return penalty, reasons
 
 
-def find_candidates(notice: dict, points: dict, features: list, top: int = 5) -> dict:
-    chome, block, go = parse_place(notice["place"])
-    if chome is None:
-        return {"error": f"場所を読めない: {notice['place']}"}
-    axis = block_axis(points, chome, block)
-    if axis is None:
-        return {"error": f"街区の点が見つからない: {chome}{block}番"}
-
-    m_lat, m_lon = meters_per_degree(axis[0][0])
-    scored = []
+def prepare_buildings(features: list) -> list[dict]:
+    """既存建物を1回だけ前処理する（名簿を総当たりするので使い回す）。"""
+    m_lat, m_lon = meters_per_degree(35.64)
+    prepared = []
     for feature in features:
         p = feature["properties"]
         lats, lons = [], []
@@ -208,27 +203,38 @@ def find_candidates(notice: dict, points: dict, features: list, top: int = 5) ->
                 lats.append(item[1])
             else:
                 stack.extend(item)
-        lat, lon = sum(lats) / len(lats), sum(lons) / len(lons)
-        dist = distance_to_axis(axis, lat, lon, m_lat, m_lon)
-        if dist > BLOCK_REACH_M:
-            continue
-
         height = p.get("measuredHeight")
-        height = height if isinstance(height, (int, float)) and height > 0 else None
         floors = p.get("storeysAboveGround")
-        floors = floors if isinstance(floors, int) and 0 < floors < 100 else None
         detail = (json.loads(p.get("buildingDetailAttribute") or "[]") or [{}])[0]
-
-        building = {
+        prepared.append({
             "gml_id": p["id"],
-            "height_m": height,
-            "floors": floors,
+            "lat": sum(lats) / len(lats),
+            "lon": sum(lons) / len(lons),
+            "height_m": height if isinstance(height, (int, float)) and height > 0 else None,
+            "floors": floors if isinstance(floors, int) and 0 < floors < 100 else None,
             "footprint_m2": round(footprint_area(
                 feature["geometry"]["coordinates"], m_lat, m_lon), 1),
             "usage": p.get("usage"),
             "fireproof": detail.get("fireproofStructureType"),
-            "block_distance_m": round(dist, 1),
-        }
+        })
+    return prepared
+
+
+def find_candidates(notice: dict, points: dict, buildings: list, top: int = 5) -> dict:
+    chome, block, go = parse_place(notice["place"])
+    if chome is None:
+        return {"error": f"場所を読めない: {notice['place']}"}
+    axis = block_axis(points, chome, block)
+    if axis is None:
+        return {"error": f"街区の点が見つからない: {chome}{block}番"}
+
+    m_lat, m_lon = meters_per_degree(axis[0][0])
+    scored = []
+    for b in buildings:
+        dist = distance_to_axis(axis, b["lat"], b["lon"], m_lat, m_lon)
+        if dist > BLOCK_REACH_M:
+            continue
+        building = dict(b, block_distance_m=round(dist, 1))
         penalty, reasons = score(notice, building)
         building["score"] = round(penalty, 2)
         building["reasons"] = reasons
@@ -250,11 +256,47 @@ def find_candidates(notice: dict, points: dict, features: list, top: int = 5) ->
     }
 
 
+def scan(notices: list, points: dict, buildings: list) -> list[dict]:
+    """名簿を総当たりして、**1棟に決まったものだけ**を返す。
+
+    どの場所なら自信をもってオレンジに塗れるかを探すために使う。
+    `python pipeline/make_demolition_geojson.py --scan`
+    """
+    found = []
+    for notice in notices:
+        if not (notice["floors_above"] and notice["total_floor_area_m2"]
+                and notice["structure"]):
+            continue
+        result = find_candidates(notice, points, buildings, top=2)
+        if "error" in result or not result["confident"]:
+            continue
+        found.append({"notice": notice, **result})
+    return found
+
+
 def main():
-    wanted = sys.argv[1] if len(sys.argv) > 1 else "中目黒3-5-8"
+    args = sys.argv[1:]
+    scanning = "--scan" in args
+    wanted = next((a for a in args if not a.startswith("-")), "中目黒3-4-11")
 
     notices = read_notices()
     print(f"解体の届出 {len(notices)}件（「特定建設」だけの行は除いた）")
+
+    if scanning:
+        points = load_block_points()
+        print(f"{BLDG_GEOJSON} を読み込み中…")
+        buildings = prepare_buildings(
+            json.loads(BLDG_GEOJSON.read_text(encoding="utf-8"))["features"])
+        found = scan(notices, points, buildings)
+        print(f"\n1棟に決まったもの {len(found)}件:")
+        for f in found:
+            n, b = f["notice"], f["candidates"][0]
+            print(f"  {n['place']:<16} {n['structure']}造{n['floors_above']}階 "
+                  f"延べ{n['total_floor_area_m2']}㎡")
+            print(f"     → {b['gml_id']} score {b['score']}"
+                  f"（2位 {f['candidates'][1]['score']}）"
+                  f" {b['floors']}階/{b['height_m']}m/底面{b['footprint_m2']}㎡")
+        return
 
     matched = [n for n in notices if n["place"] == wanted]
     if not matched:
@@ -267,9 +309,10 @@ def main():
 
     points = load_block_points()
     print(f"{BLDG_GEOJSON} を読み込み中…")
-    features = json.loads(BLDG_GEOJSON.read_text(encoding="utf-8"))["features"]
+    buildings = prepare_buildings(
+        json.loads(BLDG_GEOJSON.read_text(encoding="utf-8"))["features"])
 
-    result = find_candidates(notice, points, features)
+    result = find_candidates(notice, points, buildings)
     if "error" in result:
         print(result["error"])
         raise SystemExit(1)
