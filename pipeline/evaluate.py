@@ -52,11 +52,28 @@ FIELD_SPECS = [
     ("floors_above", "地上の階数", "floors_above", "number"),
     ("floors_below", "地下の階数", "floors_below", "number"),
     ("height_m", "高さ", "height_m", "number"),
-    ("max_height_m", "最高の高さ", "max_height_m", "number"),
+    ("max_height_m", "最高の高さ（塔屋等まで）", "max_height_m", "number"),
+    ("eave_height_m", "軒高", "eave_height_m", "number"),
+    # 看板と届出で高さの呼び方がずれていても、3Dに使う数字が合っているかは別に見る。
+    # 「最高の高さがあればそれ、なければ高さ」は dev-policy §4 の表示の決まり。
+    ("display_height", "3D表示に使う高さ", "display_height", "number"),
     ("units", "住戸数", "units_total", "number"),
     ("construction_start", "着工予定", "construction_start", "date"),
     ("construction_end", "完了予定", "construction_end", "date"),
     ("notice_posted", "標識の設置日", "sign_posted", "date"),
+]
+
+# 分かっている読み間違いの例。直した経緯を残すために docs にも出す（dev-policy §6）。
+KNOWN_MISREADS = [
+    "IMG_3928（届出No.51）の住居表示：看板には「3丁目17番」と書いてあるが、"
+    "地名地番と同じ欄に併記されていたため最初は「3丁目1番」と読んだ（写真で確認済み）。"
+    "住居表示を`address`として分けて取るようにして直った。"
+    "地番で届出を引いても17番と分かり、建物名「上目黒317」とも合う。",
+    "IMG_3931・IMG_3936の高さ：軒高を`height_m`に入れていた"
+    "（看板の書式が「高さ ○m（塔屋等まで ○m、軒高 ○m）」）。"
+    "高さを3つに分け、検算に「軒高 ≤ 高さ ≤ 最高の高さ」を足して直った。"
+    "3D表示は最高の高さ（なければ高さ）を使うので、軒高が高さの箱に入ったままだと"
+    "建物が2m低く立っていた。",
 ]
 
 KEY_LABELS = {
@@ -71,6 +88,13 @@ KEY_LABELS = {
 
 def board_item(result: dict, name: str):
     """看板側の (値, 状態, 確信度) を取り出す。"""
+    if name == "display_height":
+        fields = result.get("fields") or {}
+        for key in ("max_height_m", "height_m"):
+            field = fields.get(key) or {}
+            if field.get("value") is not None:
+                return field["value"], field.get("status"), field.get("confidence")
+        return None, "absent", None
     if name == "lot":
         lot = result.get("lot") or {}
         numbers = [normalize.parcel(p.get("number")) for p in (lot.get("parcels") or [])]
@@ -88,6 +112,8 @@ def filing_item(row: dict, column: str):
         text = normalize.text(row.get("address_raw")) or ""
         m = re.search(r"(\d+)号", text)
         return m.group(1) if m else None
+    if column == "display_height":
+        return (row.get("max_height_m") or "").strip() or (row.get("height_m") or "").strip() or None
     value = (row.get(column) or "").strip()
     return value or None
 
@@ -321,6 +347,18 @@ def write_markdown(report: dict):
         f"{report['all']['filing_uncertain_on_mismatch']}件"
         "（看板ではなく届出の読み間違いの可能性がある）",
         "",
+        "## 食い違った項目の読み直し",
+        "",
+        "検算に引っかかった項目だけを、推論の強さ`medium`で読み直した結果（dev-policy §3）。",
+        "",
+        f"- 読み直した写真: {report['reread_counts']['photos']}枚",
+        f"- 値が変わった: {report['reread_counts']['changed_a_value']}件",
+        f"- 読み直しで矛盾が解消した: {report['reread_counts']['resolved']}件",
+        "",
+        "## 分かっている読み間違いの例",
+        "",
+    ] + [f"- {example}" for example in KNOWN_MISREADS] + [
+        "",
         "## 照合できなかった写真・別の看板だった写真",
         "",
     ]
@@ -342,6 +380,9 @@ def write_markdown(report: dict):
         "（丁目は漢数字、「ヶ」「ケ」、全角と半角、空白）",
         "- 構造は 木造 / S造 / RC造 / SRC造 / その他 の5つにそろえてから比べる",
         "- 日付は年月までしか読めなかった場合、年月が合っていれば一致とみなす",
+        "- 高さは3つ（高さ・塔屋等まで・軒高）を別々に比べる。看板と届出で呼び方がずれることが"
+        "あるので、3Dに使う数字が合っているかは「3D表示に使う高さ」"
+        "（最高の高さがあればそれ、なければ高さ）で別に見る",
         "- 一致率の分母は、看板と届出の両方に値があった項目だけ",
         f"- 「自信なし」は確信度 < {LOW_CONFIDENCE}、または状態が `unreadable`・`masked` の項目",
         "",
@@ -377,6 +418,17 @@ def main():
     print(f"届出 {len(filings)}件（目視確認済み {sum(map(is_verified, filings))}件）、"
           f"写真 {len(readings)}枚")
 
+    # medium での読み直しがどれだけ効いたか（照合できなかった写真も含めて数える）
+    rereads = []
+    for photo, results in readings:
+        for result in results:
+            done = result.get("reread")
+            if done:
+                rereads.append({"photo": photo, "fields": done["fields"],
+                                "changed": done["changed"], "resolved": done.get("resolved"),
+                                "remaining": [i["message"] for i in
+                                              (result.get("consistency_issues") or [])]})
+
     matched, unmatched, other, unreadable = [], [], [], []
     for photo, results in readings:
         candidates = [r for r in results
@@ -399,6 +451,8 @@ def main():
                     "filing_no": row.get("filing_no"),
                     "match_key": key,
                     "verified": is_verified(row),
+                    "page_image": row.get("page_image"),
+                    "filing_uncertain": row.get("uncertain"),
                     "consistency_issues": result.get("consistency_issues") or [],
                     "comparisons": compare_photo(result, row),
                 })
@@ -418,6 +472,12 @@ def main():
             "unreadable": len(unreadable),
         },
         "match_keys": dict(Counter(m["match_key"] for m in matched)),
+        "rereads": rereads,
+        "reread_counts": {
+            "photos": len({r["photo"] for r in rereads}),
+            "changed_a_value": sum(1 for r in rereads if r["changed"]),
+            "resolved": sum(1 for r in rereads if r["resolved"]),
+        },
         "all": aggregate(matched),
         "verified": aggregate([m for m in matched if m["verified"]]),
         "unverified": aggregate([m for m in matched if not m["verified"]]),
