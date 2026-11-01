@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 from crop_board import OUT_DIR, crop_boards
-from read_board import check_consistency, needs_retake, read_board
+from read_board import check_consistency, needs_retake, read_board, retake_reason
 
 image_path = Path(sys.argv[1])
 prompt = sys.argv[2] if len(sys.argv) > 2 else "notice board"
@@ -23,6 +23,7 @@ for p in paths:
     r = read_board(p)
     r["consistency_issues"] = check_consistency(r.get("fields", {}))
     r["needs_retake"] = needs_retake(r)
+    r["retake_reason"] = retake_reason(r)
     r["source_image"] = str(image_path)
     r["read_image"] = str(p)
     r["board_detected"] = found
