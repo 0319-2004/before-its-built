@@ -1,0 +1,104 @@
+{
+ "generated": "2026-11-01",
+ "place": "中目黒3-5-8",
+ "notice": {
+  "kind": "解体・特定",
+  "structure": "SRC",
+  "floors_above": 7,
+  "floors_below": null,
+  "total_floor_area_m2": 798.4,
+  "work_start": "R8.4.1",
+  "work_end": "R8.7.31"
+ },
+ "chome": "中目黒三丁目",
+ "block": 5,
+ "go": 8,
+ "confident": false,
+ "candidates": [
+  {
+   "gml_id": "bldg_bb90e6c5-0125-4c5a-b885-3d8ddcccb0a0",
+   "height_m": 34.2,
+   "floors": 11,
+   "footprint_m2": 106.7,
+   "usage": "[\"共同住宅\"]",
+   "fireproof": "耐火",
+   "block_distance_m": 46.9,
+   "score": 3.86,
+   "reasons": [
+    "階数のずれ 0.4",
+    "底面 107㎡ / 期待 114㎡（6%ずれ）",
+    "街区の軸から 47m",
+    "耐火性能は合う（耐火）"
+   ]
+  },
+  {
+   "gml_id": "bldg_611690a5-5af8-4105-944f-b06438e162f6",
+   "height_m": 26.9,
+   "floors": 8,
+   "footprint_m2": 94.4,
+   "usage": "[\"店舗等併用住宅\"]",
+   "fireproof": "耐火",
+   "block_distance_m": 51.0,
+   "score": 4.27,
+   "reasons": [
+    "階数のずれ 0.0",
+    "底面 94㎡ / 期待 114㎡（17%ずれ）",
+    "街区の軸から 51m",
+    "耐火性能は合う（耐火）"
+   ]
+  },
+  {
+   "gml_id": "bldg_0fb13560-3ed9-4f3f-82d9-8939a06030fe",
+   "height_m": 29.3,
+   "floors": 8,
+   "footprint_m2": 144.4,
+   "usage": "[\"店舗等併用住宅\"]",
+   "fireproof": "耐火",
+   "block_distance_m": 51.5,
+   "score": 5.24,
+   "reasons": [
+    "階数のずれ 0.0",
+    "底面 144㎡ / 期待 114㎡（27%ずれ）",
+    "街区の軸から 52m",
+    "耐火性能は合う（耐火）"
+   ]
+  },
+  {
+   "gml_id": "bldg_5be44256-3e3d-4772-9017-dbced671906b",
+   "height_m": 26.3,
+   "floors": 7,
+   "footprint_m2": 69.6,
+   "usage": "[\"店舗等併用住宅\"]",
+   "fireproof": "耐火",
+   "block_distance_m": 48.4,
+   "score": 6.32,
+   "reasons": [
+    "階数のずれ 0.0",
+    "底面 70㎡ / 期待 114㎡（39%ずれ）",
+    "街区の軸から 48m",
+    "耐火性能は合う（耐火）"
+   ]
+  },
+  {
+   "gml_id": "bldg_7756456f-4a0d-43a5-b7e4-794cb01f9265",
+   "height_m": 29.8,
+   "floors": 8,
+   "footprint_m2": 69.2,
+   "usage": "[\"業務施設\"]",
+   "fireproof": "耐火",
+   "block_distance_m": 48.7,
+   "score": 6.37,
+   "reasons": [
+    "階数のずれ 0.0",
+    "底面 69㎡ / 期待 114㎡（39%ずれ）",
+    "街区の軸から 49m",
+    "耐火性能は合う（耐火）"
+   ]
+  }
+ ],
+ "note": "解体される建物をPLATEAUの中から絞ったもの。住居表示の「号」を座標にする手段がないため、街区の中の候補を階数・床面積・耐火性能・距離で順位付けしている。confident が false のときは1棟に決まっていない。",
+ "sources": [
+  "目黒区 解体工事等標識設置届出名簿（目黒区オープンデータ CC BY 4.0） https://www.city.meguro.tokyo.jp/opendata/",
+  "3D都市モデル（Project PLATEAU）目黒区（2025年度）/ 国土交通省 を加工して作成"
+ ]
+}
