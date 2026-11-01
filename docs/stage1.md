@@ -5,7 +5,7 @@
 
 ```sh
 source .venv/bin/activate
-python pipeline/make_planned_geojson.py     # → data/planned/planned.geojson
+python pipeline/make_planned_geojson.py     # → web/public/planned.geojson
 cd web && npm run dev
 # http://localhost:5173/?set=lod1&stage=1&time=10
 ```
@@ -98,19 +98,53 @@ GeoJSON 自身にも断りを持たせてある:
 
 **建築物の名称は入れていない。**「○○様邸」のように個人名が入るため（dev-policy §4）。
 
-## 6. `data/` を dev サーバーだけが配る
+## 6. 出力先は `web/public/`。公開前の確認はコードでやる
 
-`planned.geojson` は `data/` の下に出す（`data/` はリポジトリに入れない）。
-`web/vite.config.ts` に、**開発中だけ** `/data/…` の **`.geojson` に限って**
-配るミドルウェアを入れた。届出のPDFや写真はこの経路でも出ない。
+`planned.geojson` は **`web/public/planned.geojson`** に直接書き出す。
+`data/` に出してから手でコピーすると、コピーを忘れるし、
+確認を通っていないものが公開側に混ざる。読むのは `data/` の中だが、
+**出すのは公開してよい形にそろえたものだけ**にする。
+
+書き出す前に `check_publishable()` が3つを確かめ、
+通らなければ**書き出さずに止まる**:
+
+| | 確かめること |
+|---|---|
+| 確認前の印 | 1棟ずつ `confirmed`（真偽値）と `status_label`（確認前／確認済み）が付き、食い違っていない |
+| 出どころ | 1棟ずつに `source`（目黒区 中高層建築物の標識設置届）と `license`（CC BY 4.0）。`metadata.sources` にも |
+| 項目 | `ALLOWED_PROPERTIES` の中だけ。**建築物の名称は許可リストに無い**ので、足そうとすると止まる |
+
+許可リスト方式にしたのは、項目を足すときに許可リストのほうを先に直すことになるからで、
+「うっかり建物の名称を足す」が素通りしない。実際に、名称・建築主・電話番号を
+混ぜる・印を消す・出典を消すなど9通りを入れて、全部止まることを確かめた。
+
+`uncertain_fields` は「どの欄が怪しいか」の**欄名の並び**で、読み取った値ではない。
+欄名以外が入っていたら値が漏れている可能性があるので、そこも確かめている。
+
+## 7. ビルドすると街並みが丸ごと消える（直した）
+
+`npm run dev` では出るのに、`npm run build` したものでは
+**PLATEAUの街並みが1棟も出ない**（青の計画建物だけが宙に浮く）。
 
 ```
-/data/planned/planned.geojson     → 200 application/geo+json
-/data/meguro/filings_extracted.csv → index.html にフォールバック（配らない）
-/data/../../etc/hosts.geojson      → index.html にフォールバック（配らない）
+CompileError: WebAssembly.instantiate():
+  expected magic word 00 61 73 6d, found 3c 21 64 6f
 ```
 
-**公開用のデプロイでは別の置き方が要る。** まだ決めていない（dev-policy §9・§14）。
+`3c 21 64 6f` は `<!do`。WASMが404になり、代わりに返ってきた
+`index.html` を WebAssembly として読もうとしていた。
+
+`@navaramap/three` は `dist/assets/` にハッシュ付きのWASMを同梱していて、
+パッケージの中のワーカーが隣のファイル名でそれを読む。
+vite はこの参照をたどりきれず、`draco_decoder-*.wasm` と
+`navara_wasm_font_worker_bg-*.wasm` を出力に入れていなかった。
+**PLATEAUのb3dmはDraco圧縮**なので、デコーダが無いと街並みが丸ごと消える。
+
+`vite.config.ts` の `copyNavaraAssets()` で入れ直した。
+console.error は63件から1件（`/favicon.ico`）に減り、b3dmも78枚描けている。
+
+**dev だけで確かめても足りない。** 公開するものは必ず
+`npm run build && npm run preview` の側で見ること。
 
 ---
 

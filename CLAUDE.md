@@ -64,8 +64,14 @@ PLATEAU の3D都市モデルの上に立ち上げる。
 （地図のラスタだけが見えて「タイルが出ていない」ように見える）。
 `?time=10` で現地の視太陽時を渡す。手順と実測は `docs/stage1.md`。
 
-`planned.geojson` は `data/` に出し、**dev サーバーだけ**が `/data/…` の
-`.geojson` に限って配る（`web/vite.config.ts`）。公開用の置き方は未定。
+`planned.geojson` は **`web/public/`** に直接書き出す（公開される）。
+`data/` に出してから手でコピーしない。入れてよいものかは
+`make_planned_geojson.py` の `check_publishable()` がコードで確かめ、
+通らなければ書き出さずに止まる（確認前の印・出どころ・項目の許可リスト）。
+
+**公開するものは `npm run build && npm run preview` の側で確かめる。**
+dev では出るのにビルドでは街並みが丸ごと消える、という失敗を一度している
+（NAVARA 同梱の Draco の WASM が出力に入らない。`vite.config.ts` で入れ直し済み）。
 
 **3Dに置く高さは楕円体高**。標高（b3dmの`_zmin`など）を使うと目黒区では
 36.7m沈んで見えなくなる。`bldg.geojson` のZはそのまま使ってよい。

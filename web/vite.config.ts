@@ -1,37 +1,50 @@
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { copyFile, mkdir, readdir, stat } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 
 /**
- * `data/` の GeoJSON を dev サーバーから配る。
+ * NAVARA が同梱している WASM を、ビルド結果に入れ直す。
  *
- * `data/` はリポジトリに入れない決まりなので（届出のPDFや写真が入っている）、
- * ビルド成果物に取り込まず、**開発中だけ** `/data/…` で読めるようにする。
- * 配るのは `.geojson` だけ。PDFや写真はこの経路でも出ない。
+ * `@navaramap/three` は `dist/assets/` にハッシュ付きのWASMを同梱していて、
+ * パッケージの中のワーカーが**隣のファイル名で**それを読む。
+ * vite はこの参照をたどりきれず、`draco_decoder-*.wasm` と
+ * `navara_wasm_font_worker_bg-*.wasm` を出力に入れない。
  *
- * 公開用のデプロイでは、個人名を含まない planned.geojson を別途
- * 置き直す必要がある（まだ決めていない。dev-policy §9・§14）。
+ * 入っていないと、dev では動くのに**ビルドしたときだけ**、
+ * 404 で返ってきた index.html を WebAssembly.instantiate しようとして
+ * `expected magic word 00 61 73 6d, found 3c 21 64 6f`（`<!do`）で落ちる。
+ * PLATEAU の b3dm は Draco 圧縮なので、**街並みが丸ごと出なくなる**。
+ *
+ * vite が出した同名のファイルは上書きしない（ハッシュが同じなら中身も同じ）。
  */
-function serveDataGeojson(): Plugin {
-  const root = resolve(import.meta.dirname, "..", "data");
+function copyNavaraAssets(): Plugin {
+  let outDir = "dist";
   return {
-    name: "serve-data-geojson",
-    apply: "serve",
-    configureServer(server) {
-      server.middlewares.use(async (req, res, next) => {
-        const path = (req.url ?? "").split("?")[0];
-        if (!path.startsWith("/data/") || !path.endsWith(".geojson")) return next();
-        // `..` でディレクトリを抜けられないようにする
-        const file = resolve(root, path.slice("/data/".length));
-        if (!file.startsWith(root + "/")) return next();
-        try {
-          const body = await readFile(file);
-          res.setHeader("Content-Type", "application/geo+json; charset=utf-8");
-          res.end(body);
-        } catch {
-          next();
-        }
-      });
+    name: "copy-navara-assets",
+    apply: "build",
+    configResolved(config) {
+      outDir = config.build.outDir;
+    },
+    async closeBundle() {
+      const from = resolve(
+        import.meta.dirname,
+        "node_modules/@navaramap/three/dist/assets",
+      );
+      if (!existsSync(from)) return;
+      const to = resolve(import.meta.dirname, outDir, "assets");
+      await mkdir(to, { recursive: true });
+
+      let copied = 0;
+      for (const name of await readdir(from)) {
+        // ソースマップは配らない。ディレクトリは今のところ参照されていない。
+        if (name.endsWith(".map")) continue;
+        if ((await stat(join(from, name))).isDirectory()) continue;
+        if (existsSync(join(to, name))) continue;
+        await copyFile(join(from, name), join(to, name));
+        copied += 1;
+      }
+      if (copied) this.info(`NAVARA 同梱のアセットを ${copied}件 入れ直した`);
     },
   };
 }
@@ -50,7 +63,7 @@ const headers =
     : undefined;
 
 export default defineConfig({
-  plugins: [serveDataGeojson()],
+  plugins: [copyNavaraAssets()],
   server: { headers },
   preview: { headers },
   // プリバンドルすると WASM / worker の解決に失敗することがあるため除外する。

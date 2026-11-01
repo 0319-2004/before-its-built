@@ -5,3 +5,4 @@ data/
 samples/
 .DS_Store
 node_modules/
+web/dist/

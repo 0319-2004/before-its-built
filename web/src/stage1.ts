@@ -27,8 +27,11 @@ const PLANNED_OUTLINE = 0x9ecbff;
 const UNCONFIRMED = { opacity: 0.55, emissiveIntensity: 0.25 };
 const CONFIRMED = { opacity: 0.95, emissiveIntensity: 0.05 };
 
-/** 既定の読み込み先。dev サーバーが `data/` から配る（vite.config.ts）。 */
-export const PLANNED_URL = "/data/planned/planned.geojson";
+/**
+ * 既定の読み込み先。`web/public/` にあるので dev でもビルド後でも同じURL。
+ * 中身は `pipeline/make_planned_geojson.py` が作る（個人名は入っていない）。
+ */
+export const PLANNED_URL = "/planned.geojson";
 
 type PlannedProperties = {
   filing_no: number | null;

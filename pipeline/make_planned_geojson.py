@@ -6,11 +6,21 @@
 
     python pipeline/make_planned_geojson.py
 
-出力は `data/planned/planned.geojson`。
+出力は **`web/public/planned.geojson`**。ここは公開されるので、
+入れてよいものだけを入れる。読むのは `data/` の中（リポジトリに入れない）だが、
+**出すのは公開してよい形にそろえたものだけ**で、`data/` のコピーは置かない。
+
 **届出はまだ目視確認が済んでいないので、全件に「確認前」の印が付く。**
 `filings_extracted.csv` の `verified` に 1 が入った行だけ `confirmed: true` になる。
 
-建築物の名称は入れない（「○○様邸」のように個人名が入るため。dev-policy §4）。
+公開してよい形かどうかは `check_publishable()` がコードで確かめ、
+通らなければ**書き出さずに止まる**（dev-policy §4）。確かめるのは3つ:
+
+  1. 1棟ずつに「確認前／確認済み」の印が付いていること
+  2. 1棟ずつに出どころ（目黒区の標識設置届、CC BY 4.0）が付いていること
+  3. 項目が許可リストの中だけであること。
+     **建築物の名称は入れない**（「○○様邸」のように個人名が入るため）。
+     建築主・設計者・施工者・担当者の氏名、住所、電話番号も同じ。
 
 近似であることの断り:
   - 形は正方形で、**北向き**。dev-policy §5 の「最寄りの道路に沿わせる」はまだ。
@@ -30,7 +40,42 @@ import normalize
 
 FILINGS_CSV = Path("data/meguro/filings_extracted.csv")
 BLDG_GEOJSON = Path("data/PLATEAU/bldg.geojson")
-OUT = Path("data/planned/planned.geojson")
+
+# 公開される場所に直接書き出す。`data/` に出してから手でコピーしない
+# （コピーは忘れるし、個人情報の確認を通らないものが混ざる）。
+OUT = Path("web/public/planned.geojson")
+
+# 出どころ。1棟ずつにも付ける（データだけ取り出されても出典が残るように）。
+SOURCE = "目黒区 中高層建築物の標識設置届"
+LICENSE = "CC BY 4.0"
+SOURCE_URL = "https://www.city.meguro.tokyo.jp/opendata/"
+
+# 公開してよい項目の許可リスト。**ここに無い項目は書き出さない。**
+# 建築物の名称（building_name）や、建築主・設計者・施工者・担当者の
+# 氏名・住所・電話番号は入れない（dev-policy §4）。
+ALLOWED_PROPERTIES = {
+    "filing_no", "chome", "block", "use", "work_type", "structure",
+    "floors_above", "floors_below", "units_total",
+    "site_area_m2", "building_area_m2", "total_floor_area_m2",
+    "height_m", "max_height_m", "eave_height_m",
+    "display_height_m", "display_height_source",
+    "construction_start", "construction_end", "sign_posted",
+    "base_z_m", "base_z_samples", "base_z_radius_m", "base_z_rough",
+    "footprint", "position",
+    "confirmed", "status_label", "uncertain_fields",
+    "source", "license",
+}
+
+# `uncertain_fields` は「どの欄が怪しいか」の欄名の並びで、中身の値ではない。
+# 欄名以外の文字が入っていたら、読み取った値が漏れている可能性がある。
+FILING_COLUMNS = {
+    "is_filing", "filing_type", "filing_no", "sign_posted", "building_name",
+    "lot_raw", "address_raw", "address_chome", "address_block", "zoning",
+    "use", "work_type", "units_total", "height_m", "max_height_m",
+    "eave_height_m", "floors_above", "floors_below", "structure",
+    "site_area_m2", "building_area_m2", "total_floor_area_m2",
+    "construction_start", "construction_end",
+}
 
 # 街区レベル位置参照情報（目黒区、2025年版）。zip のまま置いてあるので直接読む。
 # CP932。代表フラグ=1 の点だけを使う（dev-policy §6）。
@@ -254,14 +299,67 @@ def build_feature(row: dict, points, index) -> tuple[dict | None, str | None]:
             "footprint": "square_north",
             "position": "block_representative_point",
             "confirmed": confirmed,
-            "status_label": "確認前" if not confirmed else "確認済み",
+            "status_label": "確認済み" if confirmed else "確認前",
             "uncertain_fields": uncertain,
+            # 1棟だけ取り出されても出どころが分かるように、棟ごとにも持たせる
+            "source": SOURCE,
+            "license": LICENSE,
         },
         "geometry": {
             "type": "Polygon",
             "coordinates": [square_footprint(lat, lon, area)],
         },
     }, None
+
+
+def check_publishable(collection: dict) -> list[str]:
+    """公開してよい形かをコードで確かめる。問題の一覧を返す（空なら合格）。
+
+    目で見て確かめるのではなく、書き出すたびに必ず通す。
+    項目を足したときは `ALLOWED_PROPERTIES` のほうを先に直すことになるので、
+    「うっかり建物の名称を足す」が素通りしない。
+    """
+    problems = []
+
+    sources = collection.get("metadata", {}).get("sources") or []
+    if not any(SOURCE in s for s in sources):
+        problems.append(f"metadata.sources に出どころ（{SOURCE}）がない")
+    if not any(LICENSE in s for s in sources):
+        problems.append(f"metadata.sources にライセンス（{LICENSE}）がない")
+
+    for feature in collection["features"]:
+        p = feature["properties"]
+        no = p.get("filing_no")
+
+        # 1. 確認前の印
+        if not isinstance(p.get("confirmed"), bool):
+            problems.append(f"No.{no}: confirmed が真偽値でない")
+        expected = "確認済み" if p.get("confirmed") else "確認前"
+        if p.get("status_label") != expected:
+            problems.append(
+                f"No.{no}: status_label が {p.get('status_label')!r}、"
+                f"confirmed={p.get('confirmed')} と合わない")
+
+        # 2. 出どころ
+        if p.get("source") != SOURCE:
+            problems.append(f"No.{no}: source が {p.get('source')!r}")
+        if p.get("license") != LICENSE:
+            problems.append(f"No.{no}: license が {p.get('license')!r}")
+
+        # 3. 許可リストにない項目（個人名が入りうるものを止める）
+        for key in sorted(set(p) - ALLOWED_PROPERTIES):
+            problems.append(f"No.{no}: 許可していない項目 {key!r} が入っている")
+
+        # `uncertain_fields` は欄名の並びのはず。値が紛れていないか確かめる。
+        uncertain = p.get("uncertain_fields")
+        if uncertain:
+            unknown = [c for c in str(uncertain).split(",")
+                       if c.strip() and c.strip() not in FILING_COLUMNS]
+            if unknown:
+                problems.append(
+                    f"No.{no}: uncertain_fields に欄名でないもの {unknown}")
+
+    return problems
 
 
 def main():
@@ -299,7 +397,7 @@ def main():
                     "位置は街区の代表点、形は建築面積と同じ面積の北向きの正方形で、"
                     "いずれも近似。",
             "sources": [
-                "目黒区 中高層建築物の標識設置届（目黒区オープンデータ CC BY 4.0）",
+                f"{SOURCE}（目黒区オープンデータ {LICENSE}） {SOURCE_URL}",
                 "国土交通省 街区レベル位置参照情報（目黒区、2025年版）",
                 "3D都市モデル（Project PLATEAU）目黒区（2025年度）/ 国土交通省 を加工して作成",
             ],
@@ -307,11 +405,20 @@ def main():
         "features": features,
     }
 
+    # 公開される場所に書くので、確かめてから書く。通らなければ書かない。
+    problems = check_publishable(collection)
+    if problems:
+        print(f"\n公開してよい形になっていません（{len(problems)}件）。書き出しを中止します:")
+        for problem in problems[:20]:
+            print(f"  - {problem}")
+        raise SystemExit(1)
+
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(collection, ensure_ascii=False, indent=1), encoding="utf-8")
 
     print(f"\n{len(features)}棟を書き出しました → {OUT}")
     print(f"  確認済み {confirmed}件 / 確認前 {len(features) - confirmed}件")
+    print(f"  公開前の確認: 確認前の印・出どころ・項目の許可リスト すべて通過")
     if skipped:
         print(f"\n作れなかった届出 {len(skipped)}件:")
         for filing_no, reason in skipped:

@@ -1,0 +1,2411 @@
+{
+ "type": "FeatureCollection",
+ "metadata": {
+  "generated": "2026-11-01",
+  "count": 38,
+  "confirmed": 0,
+  "unconfirmed": 38,
+  "note": "届出の読み取り結果。目視確認が済んでいない行は「確認前」。位置は街区の代表点、形は建築面積と同じ面積の北向きの正方形で、いずれも近似。",
+  "sources": [
+   "目黒区 中高層建築物の標識設置届（目黒区オープンデータ CC BY 4.0） https://www.city.meguro.tokyo.jp/opendata/",
+   "国土交通省 街区レベル位置参照情報（目黒区、2025年版）",
+   "3D都市モデル（Project PLATEAU）目黒区（2025年度）/ 国土交通省 を加工して作成"
+  ]
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 3,
+    "chome": "上目黒三丁目",
+    "block": 20,
+    "use": "共同住宅",
+    "work_type": "新築",
+    "structure": "木造",
+    "floors_above": 2,
+    "floors_below": 1,
+    "units_total": 4,
+    "site_area_m2": 400.1,
+    "building_area_m2": 255.86,
+    "total_floor_area_m2": 503.48,
+    "height_m": 9.909,
+    "max_height_m": null,
+    "eave_height_m": 7.1,
+    "display_height_m": 9.909,
+    "display_height_source": "height_m",
+    "construction_start": "2027-01-15",
+    "construction_end": "2028-05-10",
+    "sign_posted": "2026-03-30",
+    "base_z_m": 56.12,
+    "base_z_samples": 53,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69450469,
+       35.64531092
+      ],
+      [
+       139.69468131,
+       35.64531092
+      ],
+      [
+       139.69468131,
+       35.64545508
+      ],
+      [
+       139.69450469,
+       35.64545508
+      ],
+      [
+       139.69450469,
+       35.64531092
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 1,
+    "chome": "上目黒二丁目",
+    "block": 18,
+    "use": "共同住宅・飲食店・事務所(学習塾)",
+    "work_type": "新築",
+    "structure": "S造",
+    "floors_above": 5,
+    "floors_below": 0,
+    "units_total": 4,
+    "site_area_m2": 135.6,
+    "building_area_m2": 101.66,
+    "total_floor_area_m2": 486.67,
+    "height_m": 15.422,
+    "max_height_m": null,
+    "eave_height_m": 14.92,
+    "display_height_m": 15.422,
+    "display_height_source": "height_m",
+    "construction_start": "2026-07-21",
+    "construction_end": "2027-03-20",
+    "sign_posted": "2026-04-02",
+    "base_z_m": 50.02,
+    "base_z_samples": 65,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69737034,
+       35.64155856
+      ],
+      [
+       139.69748166,
+       35.64155856
+      ],
+      [
+       139.69748166,
+       35.64164944
+      ],
+      [
+       139.69737034,
+       35.64164944
+      ],
+      [
+       139.69737034,
+       35.64155856
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 2,
+    "chome": "下目黒二丁目",
+    "block": 19,
+    "use": "共同住宅",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 5,
+    "floors_below": 0,
+    "units_total": 10,
+    "site_area_m2": 316.81,
+    "building_area_m2": 197.88,
+    "total_floor_area_m2": 824.73,
+    "height_m": 13.77,
+    "max_height_m": 14.23,
+    "eave_height_m": 13.45,
+    "display_height_m": 14.23,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-06-29",
+    "construction_end": "2027-05-31",
+    "sign_posted": "2026-04-09",
+    "base_z_m": 42.35,
+    "base_z_samples": 113,
+    "base_z_radius_m": 250.0,
+    "base_z_rough": true,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.70995535,
+       35.63224261
+      ],
+      [
+       139.71011065,
+       35.63224261
+      ],
+      [
+       139.71011065,
+       35.63236939
+      ],
+      [
+       139.70995535,
+       35.63236939
+      ],
+      [
+       139.70995535,
+       35.63224261
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 5,
+    "chome": "中央町一丁目",
+    "block": 1,
+    "use": "共同住宅",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 5,
+    "floors_below": 0,
+    "units_total": 14,
+    "site_area_m2": 157.27,
+    "building_area_m2": 114.19,
+    "total_floor_area_m2": 549.22,
+    "height_m": 12.68,
+    "max_height_m": 13.27,
+    "eave_height_m": 12.43,
+    "display_height_m": 13.27,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-08-01",
+    "construction_end": "2027-07-10",
+    "sign_posted": "2026-04-18",
+    "base_z_m": 64.26,
+    "base_z_samples": 422,
+    "base_z_radius_m": 500.0,
+    "base_z_rough": true,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": "address_chome,address_block",
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69330402,
+       35.63056884
+      ],
+      [
+       139.69342198,
+       35.63056884
+      ],
+      [
+       139.69342198,
+       35.63066516
+      ],
+      [
+       139.69330402,
+       35.63066516
+      ],
+      [
+       139.69330402,
+       35.63056884
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 9,
+    "chome": "中央町二丁目",
+    "block": 32,
+    "use": "共同住宅",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 5,
+    "floors_below": null,
+    "units_total": 5,
+    "site_area_m2": 760.06,
+    "building_area_m2": 532.0,
+    "total_floor_area_m2": 1650.0,
+    "height_m": 17.0,
+    "max_height_m": 17.0,
+    "eave_height_m": 16.2,
+    "display_height_m": 17.0,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-09-15",
+    "construction_end": "2028-03-31",
+    "sign_posted": "2026-04-28",
+    "base_z_m": 67.21,
+    "base_z_samples": 17,
+    "base_z_radius_m": 250.0,
+    "base_z_rough": true,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.68824368,
+       35.63126606
+      ],
+      [
+       139.68849832,
+       35.63126606
+      ],
+      [
+       139.68849832,
+       35.63147394
+      ],
+      [
+       139.68824368,
+       35.63147394
+      ],
+      [
+       139.68824368,
+       35.63126606
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 12,
+    "chome": "中目黒四丁目",
+    "block": 15,
+    "use": "一戸建ての住宅",
+    "work_type": "新築",
+    "structure": "S造",
+    "floors_above": 2,
+    "floors_below": 0,
+    "units_total": 1,
+    "site_area_m2": 398.12,
+    "building_area_m2": 238.51,
+    "total_floor_area_m2": 448.7,
+    "height_m": 8.424,
+    "max_height_m": null,
+    "eave_height_m": 7.724,
+    "display_height_m": 8.424,
+    "display_height_source": "height_m",
+    "construction_start": "2026-07-01",
+    "construction_end": "2027-09-30",
+    "sign_posted": "2026-05-15",
+    "base_z_m": 48.15,
+    "base_z_samples": 44,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.70167674,
+       35.6379364
+      ],
+      [
+       139.70184726,
+       35.6379364
+      ],
+      [
+       139.70184726,
+       35.6380756
+      ],
+      [
+       139.70167674,
+       35.6380756
+      ],
+      [
+       139.70167674,
+       35.6379364
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 13,
+    "chome": "上目黒三丁目",
+    "block": 32,
+    "use": "共同住宅",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 3,
+    "floors_below": 1,
+    "units_total": 7,
+    "site_area_m2": 770.18,
+    "building_area_m2": 539.08,
+    "total_floor_area_m2": 1639.69,
+    "height_m": 9.99,
+    "max_height_m": 12.62,
+    "eave_height_m": 9.65,
+    "display_height_m": 12.62,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-08-17",
+    "construction_end": "2028-01-31",
+    "sign_posted": "2026-05-15",
+    "base_z_m": 49.9,
+    "base_z_samples": 42,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": "zoning,construction_end",
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69616482,
+       35.64250037
+      ],
+      [
+       139.69642118,
+       35.64250037
+      ],
+      [
+       139.69642118,
+       35.64270963
+      ],
+      [
+       139.69616482,
+       35.64270963
+      ],
+      [
+       139.69616482,
+       35.64250037
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 17,
+    "chome": "中目黒三丁目",
+    "block": 5,
+    "use": "事務所",
+    "work_type": "新築",
+    "structure": "S造",
+    "floors_above": 9,
+    "floors_below": 0,
+    "units_total": 0,
+    "site_area_m2": 151.52,
+    "building_area_m2": 115.89,
+    "total_floor_area_m2": 814.5,
+    "height_m": 33.18,
+    "max_height_m": 33.68,
+    "eave_height_m": 30.55,
+    "display_height_m": 33.68,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-09-01",
+    "construction_end": "2027-10-31",
+    "sign_posted": "2026-06-02",
+    "base_z_m": 45.82,
+    "base_z_samples": 61,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.70205157,
+       35.63987349
+      ],
+      [
+       139.70217043,
+       35.63987349
+      ],
+      [
+       139.70217043,
+       35.63997051
+      ],
+      [
+       139.70205157,
+       35.63997051
+      ],
+      [
+       139.70205157,
+       35.63987349
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 26,
+    "chome": "上目黒四丁目",
+    "block": 36,
+    "use": "一戸建ての住宅",
+    "work_type": "新築",
+    "structure": "木造",
+    "floors_above": 3,
+    "floors_below": null,
+    "units_total": null,
+    "site_area_m2": 98.64,
+    "building_area_m2": 59.02,
+    "total_floor_area_m2": 156.08,
+    "height_m": 9.936,
+    "max_height_m": 11.51,
+    "eave_height_m": 8.636,
+    "display_height_m": 11.51,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-06-30",
+    "construction_end": "2026-10-30",
+    "sign_posted": "2026-06-07",
+    "base_z_m": 55.79,
+    "base_z_samples": 74,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": "lot_raw,address_raw,address_chome",
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.68851059,
+       35.64172038
+      ],
+      [
+       139.68859541,
+       35.64172038
+      ],
+      [
+       139.68859541,
+       35.64178962
+      ],
+      [
+       139.68851059,
+       35.64178962
+      ],
+      [
+       139.68851059,
+       35.64172038
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 25,
+    "chome": "上目黒三丁目",
+    "block": 32,
+    "use": "長屋＋共同住宅",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 4,
+    "floors_below": 1,
+    "units_total": 15,
+    "site_area_m2": 347.91,
+    "building_area_m2": 186.16,
+    "total_floor_area_m2": 764.63,
+    "height_m": 9.95,
+    "max_height_m": 11.085,
+    "eave_height_m": 9.7,
+    "display_height_m": 11.085,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-09-15",
+    "construction_end": "2027-08-31",
+    "sign_posted": "2026-06-18",
+    "base_z_m": 49.9,
+    "base_z_samples": 42,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69621768,
+       35.64254351
+      ],
+      [
+       139.69636832,
+       35.64254351
+      ],
+      [
+       139.69636832,
+       35.64266649
+      ],
+      [
+       139.69621768,
+       35.64266649
+      ],
+      [
+       139.69621768,
+       35.64254351
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 27,
+    "chome": "上目黒四丁目",
+    "block": 36,
+    "use": "一戸建ての住宅",
+    "work_type": "新築",
+    "structure": "木造",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": 1,
+    "site_area_m2": 198.12,
+    "building_area_m2": 124.33,
+    "total_floor_area_m2": 322.83,
+    "height_m": 10.912,
+    "max_height_m": 12.534,
+    "eave_height_m": 9.412,
+    "display_height_m": 12.534,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-08-01",
+    "construction_end": "2026-12-24",
+    "sign_posted": "2026-06-24",
+    "base_z_m": 55.79,
+    "base_z_samples": 74,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.68849144,
+       35.64170475
+      ],
+      [
+       139.68861456,
+       35.64170475
+      ],
+      [
+       139.68861456,
+       35.64180525
+      ],
+      [
+       139.68849144,
+       35.64180525
+      ],
+      [
+       139.68849144,
+       35.64170475
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 28,
+    "chome": "下目黒五丁目",
+    "block": 22,
+    "use": "一戸建ての住宅",
+    "work_type": "新築",
+    "structure": "木造",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": 1,
+    "site_area_m2": 148.58,
+    "building_area_m2": 81.89,
+    "total_floor_area_m2": 152.35,
+    "height_m": 9.414,
+    "max_height_m": null,
+    "eave_height_m": 8.85,
+    "display_height_m": 9.414,
+    "display_height_source": "height_m",
+    "construction_start": "2026-11-02",
+    "construction_end": "2027-06-30",
+    "sign_posted": "2026-06-24",
+    "base_z_m": 63.05,
+    "base_z_samples": 20,
+    "base_z_radius_m": 500.0,
+    "base_z_rough": true,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": "units_total,floors_below",
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.70185905,
+       35.62899322
+      ],
+      [
+       139.70195895,
+       35.62899322
+      ],
+      [
+       139.70195895,
+       35.62907478
+      ],
+      [
+       139.70185905,
+       35.62907478
+      ],
+      [
+       139.70185905,
+       35.62899322
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 31,
+    "chome": "東山三丁目",
+    "block": 1,
+    "use": "店舗・共同住宅",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 10,
+    "floors_below": 0,
+    "units_total": 8,
+    "site_area_m2": 265.47,
+    "building_area_m2": 187.63,
+    "total_floor_area_m2": 1611.09,
+    "height_m": 36.26,
+    "max_height_m": 38.17,
+    "eave_height_m": 35.66,
+    "display_height_m": 38.17,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-12-01",
+    "construction_end": "2028-09-30",
+    "sign_posted": "2026-06-24",
+    "base_z_m": 50.63,
+    "base_z_samples": 3,
+    "base_z_radius_m": 250.0,
+    "base_z_rough": true,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": "use",
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.68565237,
+       35.65073527
+      ],
+      [
+       139.68580363,
+       35.65073527
+      ],
+      [
+       139.68580363,
+       35.65085873
+      ],
+      [
+       139.68565237,
+       35.65085873
+      ],
+      [
+       139.68565237,
+       35.65073527
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 32,
+    "chome": "上目黒二丁目",
+    "block": 30,
+    "use": "一戸建ての住宅",
+    "work_type": "新築",
+    "structure": "木造",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": 1,
+    "site_area_m2": 100.53,
+    "building_area_m2": 64.79,
+    "total_floor_area_m2": 166.32,
+    "height_m": 9.385,
+    "max_height_m": null,
+    "eave_height_m": 8.53,
+    "display_height_m": 9.385,
+    "display_height_source": "height_m",
+    "construction_start": "2026-08-20",
+    "construction_end": "2027-02-28",
+    "sign_posted": "2026-06-30",
+    "base_z_m": 63.54,
+    "base_z_samples": 63,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": "units_total",
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69725657,
+       35.63863573
+      ],
+      [
+       139.69734543,
+       35.63863573
+      ],
+      [
+       139.69734543,
+       35.63870827
+      ],
+      [
+       139.69725657,
+       35.63870827
+      ],
+      [
+       139.69725657,
+       35.63863573
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 33,
+    "chome": "目黒一丁目",
+    "block": 11,
+    "use": "専用住宅（一戸建ての住宅）",
+    "work_type": "新築",
+    "structure": "木造",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": null,
+    "site_area_m2": 77.39,
+    "building_area_m2": 51.75,
+    "total_floor_area_m2": 130.41,
+    "height_m": 9.24,
+    "max_height_m": null,
+    "eave_height_m": 8.68,
+    "display_height_m": 9.24,
+    "display_height_source": "height_m",
+    "construction_start": "2026-09-20",
+    "construction_end": "2027-01-31",
+    "sign_posted": "2026-07-10",
+    "base_z_m": 43.48,
+    "base_z_samples": 84,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": "units_total,zoning",
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.71103529,
+       35.63697258
+      ],
+      [
+       139.71111471,
+       35.63697258
+      ],
+      [
+       139.71111471,
+       35.63703742
+      ],
+      [
+       139.71103529,
+       35.63703742
+      ],
+      [
+       139.71103529,
+       35.63697258
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 34,
+    "chome": "中町二丁目",
+    "block": 49,
+    "use": "共同住宅",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 5,
+    "floors_below": 0,
+    "units_total": 18,
+    "site_area_m2": 229.55,
+    "building_area_m2": 160.17,
+    "total_floor_area_m2": 773.29,
+    "height_m": 15.2,
+    "max_height_m": 16.7,
+    "eave_height_m": 13.885,
+    "display_height_m": 16.7,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-11-02",
+    "construction_end": "2027-12-31",
+    "sign_posted": "2026-07-13",
+    "base_z_m": 66.9,
+    "base_z_samples": 36,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69048114,
+       35.63403597
+      ],
+      [
+       139.69062086,
+       35.63403597
+      ],
+      [
+       139.69062086,
+       35.63415003
+      ],
+      [
+       139.69048114,
+       35.63415003
+      ],
+      [
+       139.69048114,
+       35.63403597
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 39,
+    "chome": "上目黒四丁目",
+    "block": 33,
+    "use": "専用住宅",
+    "work_type": "新築",
+    "structure": "木造",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": null,
+    "site_area_m2": 100.05,
+    "building_area_m2": 45.75,
+    "total_floor_area_m2": 105.93,
+    "height_m": 8.835,
+    "max_height_m": null,
+    "eave_height_m": 7.931,
+    "display_height_m": 8.835,
+    "display_height_source": "height_m",
+    "construction_start": "2026-11-09",
+    "construction_end": "2027-04-30",
+    "sign_posted": "2026-07-17",
+    "base_z_m": 61.0,
+    "base_z_samples": 54,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": "building_area_m2",
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.68853266,
+       35.64040852
+      ],
+      [
+       139.68860734,
+       35.64040852
+      ],
+      [
+       139.68860734,
+       35.64046948
+      ],
+      [
+       139.68853266,
+       35.64046948
+      ],
+      [
+       139.68853266,
+       35.64040852
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 40,
+    "chome": "上目黒四丁目",
+    "block": 33,
+    "use": "専用住宅",
+    "work_type": "新築",
+    "structure": "木造",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": 1,
+    "site_area_m2": 80.19,
+    "building_area_m2": 47.66,
+    "total_floor_area_m2": 132.61,
+    "height_m": 9.764,
+    "max_height_m": null,
+    "eave_height_m": 7.85,
+    "display_height_m": 9.764,
+    "display_height_source": "height_m",
+    "construction_start": "2026-11-09",
+    "construction_end": "2027-04-30",
+    "sign_posted": "2026-07-17",
+    "base_z_m": 61.0,
+    "base_z_samples": 54,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": "floors_below",
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.68853189,
+       35.64040789
+      ],
+      [
+       139.68860811,
+       35.64040789
+      ],
+      [
+       139.68860811,
+       35.64047011
+      ],
+      [
+       139.68853189,
+       35.64047011
+      ],
+      [
+       139.68853189,
+       35.64040789
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 37,
+    "chome": "青葉台一丁目",
+    "block": 23,
+    "use": "店舗(飲食店)、事務所",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 5,
+    "floors_below": 0,
+    "units_total": null,
+    "site_area_m2": 126.59,
+    "building_area_m2": 87.49,
+    "total_floor_area_m2": 385.6,
+    "height_m": 16.9,
+    "max_height_m": 18.9,
+    "eave_height_m": 16.86,
+    "display_height_m": 18.9,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-10-15",
+    "construction_end": "2027-11-30",
+    "sign_posted": "2026-07-21",
+    "base_z_m": 46.37,
+    "base_z_samples": 42,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": "address_chome",
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69688436,
+       35.64658185
+      ],
+      [
+       139.69698764,
+       35.64658185
+      ],
+      [
+       139.69698764,
+       35.64666615
+      ],
+      [
+       139.69688436,
+       35.64666615
+      ],
+      [
+       139.69688436,
+       35.64658185
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 38,
+    "chome": "上目黒四丁目",
+    "block": 29,
+    "use": "共同住宅",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 3,
+    "floors_below": 1,
+    "units_total": 23,
+    "site_area_m2": 364.09,
+    "building_area_m2": 253.02,
+    "total_floor_area_m2": 952.78,
+    "height_m": 9.02,
+    "max_height_m": 9.37,
+    "eave_height_m": 8.645,
+    "display_height_m": 9.37,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-10-01",
+    "construction_end": "2027-12-24",
+    "sign_posted": "2026-07-23",
+    "base_z_m": 60.03,
+    "base_z_samples": 55,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69058119,
+       35.64044932
+      ],
+      [
+       139.69075681,
+       35.64044932
+      ],
+      [
+       139.69075681,
+       35.64059268
+      ],
+      [
+       139.69058119,
+       35.64059268
+      ],
+      [
+       139.69058119,
+       35.64044932
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 45,
+    "chome": "東山一丁目",
+    "block": 22,
+    "use": "長屋",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 3,
+    "floors_below": 1,
+    "units_total": 2,
+    "site_area_m2": 51.98,
+    "building_area_m2": 31.57,
+    "total_floor_area_m2": 115.55,
+    "height_m": 7.863,
+    "max_height_m": null,
+    "eave_height_m": 7.038,
+    "display_height_m": 7.863,
+    "display_height_source": "height_m",
+    "construction_start": "2026-11-01",
+    "construction_end": "2027-08-31",
+    "sign_posted": "2026-08-04",
+    "base_z_m": 61.76,
+    "base_z_samples": 43,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69148798,
+       35.64628568
+      ],
+      [
+       139.69155002,
+       35.64628568
+      ],
+      [
+       139.69155002,
+       35.64633632
+      ],
+      [
+       139.69148798,
+       35.64633632
+      ],
+      [
+       139.69148798,
+       35.64628568
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 43,
+    "chome": "中町二丁目",
+    "block": 17,
+    "use": "専用住宅",
+    "work_type": "新築",
+    "structure": "木造",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": 1,
+    "site_area_m2": 152.97,
+    "building_area_m2": 106.83,
+    "total_floor_area_m2": 246.51,
+    "height_m": 9.94,
+    "max_height_m": 12.26,
+    "eave_height_m": 9.42,
+    "display_height_m": 12.26,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-10-20",
+    "construction_end": "2027-04-28",
+    "sign_posted": "2026-08-17",
+    "base_z_m": 62.14,
+    "base_z_samples": 41,
+    "base_z_radius_m": 120.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69609895,
+       35.63269242
+      ],
+      [
+       139.69621305,
+       35.63269242
+      ],
+      [
+       139.69621305,
+       35.63278558
+      ],
+      [
+       139.69609895,
+       35.63278558
+      ],
+      [
+       139.69609895,
+       35.63269242
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 46,
+    "chome": "中町二丁目",
+    "block": 35,
+    "use": "一戸建ての住宅",
+    "work_type": "新築",
+    "structure": "木造",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": 1,
+    "site_area_m2": 90.6,
+    "building_area_m2": 39.69,
+    "total_floor_area_m2": 91.87,
+    "height_m": 8.743,
+    "max_height_m": null,
+    "eave_height_m": 7.858,
+    "display_height_m": 8.743,
+    "display_height_source": "height_m",
+    "construction_start": "2026-11-01",
+    "construction_end": "2027-03-31",
+    "sign_posted": "2026-08-22",
+    "base_z_m": 65.12,
+    "base_z_samples": 17,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69357522,
+       35.63310061
+      ],
+      [
+       139.69364478,
+       35.63310061
+      ],
+      [
+       139.69364478,
+       35.63315739
+      ],
+      [
+       139.69357522,
+       35.63315739
+      ],
+      [
+       139.69357522,
+       35.63310061
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 49,
+    "chome": "五本木一丁目",
+    "block": 3,
+    "use": "共同住宅",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 3,
+    "floors_below": 1,
+    "units_total": 16,
+    "site_area_m2": 286.12,
+    "building_area_m2": 213.54,
+    "total_floor_area_m2": 715.09,
+    "height_m": 9.17,
+    "max_height_m": 9.79,
+    "eave_height_m": 8.87,
+    "display_height_m": 9.79,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-12-15",
+    "construction_end": "2027-12-30",
+    "sign_posted": "2026-08-25",
+    "base_z_m": 64.71,
+    "base_z_samples": 47,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.68790133,
+       35.63948315
+      ],
+      [
+       139.68806267,
+       35.63948315
+      ],
+      [
+       139.68806267,
+       35.63961485
+      ],
+      [
+       139.68790133,
+       35.63961485
+      ],
+      [
+       139.68790133,
+       35.63948315
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 47,
+    "chome": "三田二丁目",
+    "block": 16,
+    "use": "一戸建ての住宅",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 3,
+    "floors_below": 1,
+    "units_total": 1,
+    "site_area_m2": 155.03,
+    "building_area_m2": 107.13,
+    "total_floor_area_m2": 396.68,
+    "height_m": 9.844,
+    "max_height_m": 12.159,
+    "eave_height_m": 8.939,
+    "display_height_m": 12.159,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-12-07",
+    "construction_end": "2027-12-05",
+    "sign_posted": "2026-08-28",
+    "base_z_m": 50.87,
+    "base_z_samples": 39,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": "building_area_m2",
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.71010886,
+       35.63855436
+      ],
+      [
+       139.71022314,
+       35.63855436
+      ],
+      [
+       139.71022314,
+       35.63864764
+      ],
+      [
+       139.71010886,
+       35.63864764
+      ],
+      [
+       139.71010886,
+       35.63855436
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 54,
+    "chome": "上目黒四丁目",
+    "block": 15,
+    "use": "共同住宅",
+    "work_type": "新築",
+    "structure": "S造",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": 7,
+    "site_area_m2": 129.34,
+    "building_area_m2": 82.68,
+    "total_floor_area_m2": 211.74,
+    "height_m": 9.597,
+    "max_height_m": null,
+    "eave_height_m": 8.99,
+    "display_height_m": 9.597,
+    "display_height_source": "height_m",
+    "construction_start": "2026-11-11",
+    "construction_end": "2027-05-25",
+    "sign_posted": "2026-08-31",
+    "base_z_m": 60.83,
+    "base_z_samples": 98,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.6922618,
+       35.64038702
+      ],
+      [
+       139.6923622,
+       35.64038702
+      ],
+      [
+       139.6923622,
+       35.64046898
+      ],
+      [
+       139.6922618,
+       35.64046898
+      ],
+      [
+       139.6922618,
+       35.64038702
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 50,
+    "chome": "中目黒一丁目",
+    "block": 9,
+    "use": "共同住宅",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 5,
+    "floors_below": 0,
+    "units_total": 14,
+    "site_area_m2": 168.76,
+    "building_area_m2": 125.23,
+    "total_floor_area_m2": 574.36,
+    "height_m": 13.1,
+    "max_height_m": null,
+    "eave_height_m": 12.3,
+    "display_height_m": 13.1,
+    "display_height_source": "height_m",
+    "construction_start": "2026-12-20",
+    "construction_end": "2027-10-31",
+    "sign_posted": "2026-09-02",
+    "base_z_m": 44.78,
+    "base_z_samples": 29,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.70136222,
+       35.64379657
+      ],
+      [
+       139.70148578,
+       35.64379657
+      ],
+      [
+       139.70148578,
+       35.64389743
+      ],
+      [
+       139.70136222,
+       35.64389743
+      ],
+      [
+       139.70136222,
+       35.64379657
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 51,
+    "chome": "上目黒三丁目",
+    "block": 17,
+    "use": "一戸建ての住宅",
+    "work_type": "新築",
+    "structure": "木造",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": 1,
+    "site_area_m2": 100.71,
+    "building_area_m2": 70.38,
+    "total_floor_area_m2": null,
+    "height_m": 9.281,
+    "max_height_m": null,
+    "eave_height_m": 8.446,
+    "display_height_m": 9.281,
+    "display_height_source": "height_m",
+    "construction_start": "2026-10-15",
+    "construction_end": "2027-03-15",
+    "sign_posted": "2026-09-02",
+    "base_z_m": 51.72,
+    "base_z_samples": 58,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": "building_name,total_floor_area_m2",
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69520268,
+       35.64551219
+      ],
+      [
+       139.69529532,
+       35.64551219
+      ],
+      [
+       139.69529532,
+       35.64558781
+      ],
+      [
+       139.69520268,
+       35.64558781
+      ],
+      [
+       139.69520268,
+       35.64551219
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 53,
+    "chome": "五本木二丁目",
+    "block": 43,
+    "use": "専用住宅",
+    "work_type": "新築",
+    "structure": "木造",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": 1,
+    "site_area_m2": 107.61,
+    "building_area_m2": 75.56,
+    "total_floor_area_m2": 199.79,
+    "height_m": 9.233,
+    "max_height_m": null,
+    "eave_height_m": 8.301,
+    "display_height_m": 9.233,
+    "display_height_source": "height_m",
+    "construction_start": "2027-01-07",
+    "construction_end": "2027-06-25",
+    "sign_posted": "2026-09-04",
+    "base_z_m": 67.37,
+    "base_z_samples": 96,
+    "base_z_radius_m": 250.0,
+    "base_z_rough": true,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.68606502,
+       35.63379683
+      ],
+      [
+       139.68616098,
+       35.63379683
+      ],
+      [
+       139.68616098,
+       35.63387517
+      ],
+      [
+       139.68606502,
+       35.63387517
+      ],
+      [
+       139.68606502,
+       35.63379683
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 63,
+    "chome": "三田二丁目",
+    "block": 15,
+    "use": "一戸建ての住宅",
+    "work_type": "新築",
+    "structure": "その他",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": 1,
+    "site_area_m2": 70.09,
+    "building_area_m2": 47.38,
+    "total_floor_area_m2": 111.51,
+    "height_m": 8.647,
+    "max_height_m": null,
+    "eave_height_m": 8.152,
+    "display_height_m": 8.647,
+    "display_height_source": "height_m",
+    "construction_start": "2026-10-05",
+    "construction_end": "2027-02-05",
+    "sign_posted": "2026-09-05",
+    "base_z_m": 47.41,
+    "base_z_samples": 52,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.709441,
+       35.63883998
+      ],
+      [
+       139.709517,
+       35.63883998
+      ],
+      [
+       139.709517,
+       35.63890202
+      ],
+      [
+       139.709441,
+       35.63890202
+      ],
+      [
+       139.709441,
+       35.63883998
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 55,
+    "chome": "目黒二丁目",
+    "block": 14,
+    "use": "共同住宅",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 16,
+    "floors_below": null,
+    "units_total": 101,
+    "site_area_m2": 1465.07,
+    "building_area_m2": 674.74,
+    "total_floor_area_m2": 8268.28,
+    "height_m": 49.95,
+    "max_height_m": 53.94,
+    "eave_height_m": 49.35,
+    "display_height_m": 53.94,
+    "display_height_source": "max_height_m",
+    "construction_start": "2027-07-01",
+    "construction_end": "2031-01-31",
+    "sign_posted": "2026-09-07",
+    "base_z_m": 44.03,
+    "base_z_samples": 29,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.70599561,
+       35.63675094
+      ],
+      [
+       139.70628239,
+       35.63675094
+      ],
+      [
+       139.70628239,
+       35.63698506
+      ],
+      [
+       139.70599561,
+       35.63698506
+      ],
+      [
+       139.70599561,
+       35.63675094
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 67,
+    "chome": "上目黒三丁目",
+    "block": 19,
+    "use": "一戸建ての住宅",
+    "work_type": "新築",
+    "structure": "木造",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": 1,
+    "site_area_m2": 70.32,
+    "building_area_m2": 46.37,
+    "total_floor_area_m2": 111.37,
+    "height_m": 8.72,
+    "max_height_m": null,
+    "eave_height_m": 7.881,
+    "display_height_m": 8.72,
+    "display_height_source": "height_m",
+    "construction_start": "2026-11-16",
+    "construction_end": "2027-03-22",
+    "sign_posted": "2026-09-09",
+    "base_z_m": 55.59,
+    "base_z_samples": 43,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69383141,
+       35.64567131
+      ],
+      [
+       139.69390659,
+       35.64567131
+      ],
+      [
+       139.69390659,
+       35.64573269
+      ],
+      [
+       139.69383141,
+       35.64573269
+      ],
+      [
+       139.69383141,
+       35.64567131
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 58,
+    "chome": "目黒四丁目",
+    "block": 21,
+    "use": "一戸建ての住宅",
+    "work_type": "新築",
+    "structure": "木造",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": 1,
+    "site_area_m2": 104.69,
+    "building_area_m2": 65.42,
+    "total_floor_area_m2": 151.46,
+    "height_m": 9.83,
+    "max_height_m": null,
+    "eave_height_m": 9.56,
+    "display_height_m": 9.83,
+    "display_height_source": "height_m",
+    "construction_start": "2026-12-01",
+    "construction_end": "2027-05-31",
+    "sign_posted": "2026-09-14",
+    "base_z_m": 64.68,
+    "base_z_samples": 50,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": "address_chome",
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69881535,
+       35.63346055
+      ],
+      [
+       139.69890465,
+       35.63346055
+      ],
+      [
+       139.69890465,
+       35.63353345
+      ],
+      [
+       139.69881535,
+       35.63353345
+      ],
+      [
+       139.69881535,
+       35.63346055
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 59,
+    "chome": "中町二丁目",
+    "block": 32,
+    "use": "共同住宅、日用品の販売を主目的とする店舗と備蓄倉庫",
+    "work_type": "新築",
+    "structure": "S造",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": 12,
+    "site_area_m2": 930.86,
+    "building_area_m2": 686.64,
+    "total_floor_area_m2": 1665.93,
+    "height_m": 9.86,
+    "max_height_m": 10.01,
+    "eave_height_m": 9.05,
+    "display_height_m": 10.01,
+    "display_height_source": "max_height_m",
+    "construction_start": "2026-02-13",
+    "construction_end": "2026-03-24",
+    "sign_posted": "2026-09-15",
+    "base_z_m": 66.16,
+    "base_z_samples": 4,
+    "base_z_radius_m": 120.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": "lot_raw,address_raw,address_chome,construction_start,construction_end",
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69283736,
+       35.63214291
+      ],
+      [
+       139.69312664,
+       35.63214291
+      ],
+      [
+       139.69312664,
+       35.63237909
+      ],
+      [
+       139.69283736,
+       35.63237909
+      ],
+      [
+       139.69283736,
+       35.63214291
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 60,
+    "chome": "中目黒三丁目",
+    "block": 19,
+    "use": "共同住宅",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 14,
+    "floors_below": 2,
+    "units_total": 73,
+    "site_area_m2": 1474.16,
+    "building_area_m2": 752.45,
+    "total_floor_area_m2": 7892.99,
+    "height_m": 47.48,
+    "max_height_m": 48.38,
+    "eave_height_m": 46.38,
+    "display_height_m": 48.38,
+    "display_height_source": "max_height_m",
+    "construction_start": "2027-03-31",
+    "construction_end": "2030-03-31",
+    "sign_posted": "2026-09-17",
+    "base_z_m": 59.79,
+    "base_z_samples": 59,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": "zoning,address_block,height_m,max_height_m",
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.69944157,
+       35.63832738
+      ],
+      [
+       139.69974443,
+       35.63832738
+      ],
+      [
+       139.69974443,
+       35.63857462
+      ],
+      [
+       139.69944157,
+       35.63857462
+      ],
+      [
+       139.69944157,
+       35.63832738
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 61,
+    "chome": "上目黒五丁目",
+    "block": 1,
+    "use": "共同住宅",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 3,
+    "floors_below": 1,
+    "units_total": 16,
+    "site_area_m2": 315.52,
+    "building_area_m2": 189.52,
+    "total_floor_area_m2": 717.5,
+    "height_m": 8.48,
+    "max_height_m": 9.28,
+    "eave_height_m": 8.28,
+    "display_height_m": 9.28,
+    "display_height_source": "max_height_m",
+    "construction_start": "2027-02-01",
+    "construction_end": "2028-03-01",
+    "sign_posted": "2026-09-17",
+    "base_z_m": 66.05,
+    "base_z_samples": 48,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.687956,
+       35.64541596
+      ],
+      [
+       139.688108,
+       35.64541596
+      ],
+      [
+       139.688108,
+       35.64554004
+      ],
+      [
+       139.687956,
+       35.64554004
+      ],
+      [
+       139.687956,
+       35.64541596
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 65,
+    "chome": "五本木二丁目",
+    "block": 21,
+    "use": "一戸建ての住宅",
+    "work_type": "新築",
+    "structure": "木造",
+    "floors_above": 3,
+    "floors_below": null,
+    "units_total": null,
+    "site_area_m2": 104.34,
+    "building_area_m2": 72.66,
+    "total_floor_area_m2": 148.33,
+    "height_m": 9.361,
+    "max_height_m": null,
+    "eave_height_m": 8.604,
+    "display_height_m": 9.361,
+    "display_height_source": "height_m",
+    "construction_start": "2026-12-15",
+    "construction_end": "2027-06-28",
+    "sign_posted": "2026-09-26",
+    "base_z_m": 67.06,
+    "base_z_samples": 38,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.68868995,
+       35.63381059
+      ],
+      [
+       139.68878405,
+       35.63381059
+      ],
+      [
+       139.68878405,
+       35.63388741
+      ],
+      [
+       139.68868995,
+       35.63388741
+      ],
+      [
+       139.68868995,
+       35.63381059
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "filing_no": 68,
+    "chome": "中目黒三丁目",
+    "block": 4,
+    "use": "長屋",
+    "work_type": "新築",
+    "structure": "RC造",
+    "floors_above": 3,
+    "floors_below": 0,
+    "units_total": 3,
+    "site_area_m2": 503.29,
+    "building_area_m2": 325.25,
+    "total_floor_area_m2": 852.38,
+    "height_m": 10.45,
+    "max_height_m": 10.95,
+    "eave_height_m": 9.95,
+    "display_height_m": 10.95,
+    "display_height_source": "max_height_m",
+    "construction_start": "2027-01-12",
+    "construction_end": "2028-09-15",
+    "sign_posted": "2026-10-01",
+    "base_z_m": 49.0,
+    "base_z_samples": 59,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false,
+    "footprint": "square_north",
+    "position": "block_representative_point",
+    "confirmed": false,
+    "status_label": "確認前",
+    "uncertain_fields": null,
+    "source": "目黒区 中高層建築物の標識設置届",
+    "license": "CC BY 4.0"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       139.70069144,
+       35.63988773
+      ],
+      [
+       139.70089056,
+       35.63988773
+      ],
+      [
+       139.70089056,
+       35.64005027
+      ],
+      [
+       139.70069144,
+       35.64005027
+      ],
+      [
+       139.70069144,
+       35.63988773
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}
