@@ -17,6 +17,14 @@
  *   http://localhost:5173/?stage=0&baseZ=0     基準面を間違えた場合
  *   http://localhost:5173/?stage=0&overlap=1   既存建物に重ねてZファイティングを見る
  *
+ * 段階1（届出から出した計画建物＝青）を重ねる:
+ *   http://localhost:5173/?stage=1             中目黒駅から800m以内
+ *   http://localhost:5173/?stage=1&radius=0    絞らずに全部
+ *
+ * 太陽の位置は既定で今の時刻。**夜に開くと建物が真っ黒になる**ので、
+ * 見た目を確かめるときは現地の視太陽時を渡す:
+ *   http://localhost:5173/?stage=1&time=10
+ *
  * tileset の URL は src/tilesets.ts に集約してある。
  */
 import ThreeView from "@navaramap/three";
@@ -26,6 +34,7 @@ import {
 } from "@navaramap/three-default-plugin";
 
 import { addStage0 } from "./stage0";
+import { addStage1 } from "./stage1";
 import {
   ATTRIBUTION,
   ATTRIBUTION_URL,
@@ -46,6 +55,9 @@ const diag = {
   errors: [] as string[],
   logs: [] as string[],
   stage0: null as unknown,
+  stage1: null as unknown,
+  /** 中目黒での太陽高度[度]。負なら夜で、建物が暗く写る。 */
+  sunElevation: 0,
 };
 (window as any).__diag = diag;
 
@@ -98,6 +110,18 @@ async function main() {
 
   plugin.addDefaultPhotorealScene();
 
+  // 太陽の位置。既定は今の時刻なので、**夜に開くと建物が真っ黒になる**
+  // （地図のラスタは照明を受けないので、地図だけが見えて建物が消えたように見える）。
+  // `?time=10` で現地の視太陽時を指定できる。日影（冬至）もここを使う。
+  const solarHours = params.has("time") ? Number(params.get("time")) : null;
+  if (solarHours !== null) {
+    view.atmosphere.setSolarTime({ lng: NAKAMEGURO.lng }, solarHours);
+  }
+  const sunElevation = view.atmosphere.getSunElevation(NAKAMEGURO);
+  log(`太陽高度 ${sunElevation.toFixed(1)}°`
+      + (sunElevation < 0 ? "（夜。建物は暗く見える。?time=10 で昼にできる）" : ""));
+  diag.sunElevation = sunElevation;
+
   view.setCamera({
     lng: Number(params.get("lng") ?? NAKAMEGURO.lng),
     lat: Number(params.get("lat") ?? NAKAMEGURO.lat),
@@ -138,6 +162,31 @@ async function main() {
       log(`段階0: 計画建物 base=${s0.baseZ}m top=${s0.extrudedZ}m`);
     } catch (e) {
       fail("stage0", e);
+    }
+  }
+
+  // 段階1: 届出から出した計画建物（青）。既定は中目黒駅の周り800m。
+  if (params.get("stage") === "1") {
+    try {
+      const radiusM = Number(params.get("radius") ?? 800);
+      const s1 = await addStage1(view, {
+        center: radiusM > 0 ? NAKAMEGURO : undefined,
+        radiusM: radiusM > 0 ? radiusM : undefined,
+      });
+      diag.stage1 = s1;
+      log(
+        `段階1: 計画建物 ${s1.added}/${s1.total}棟` +
+          `（確認前 ${s1.unconfirmed}／確認済み ${s1.confirmed}）`,
+      );
+      if (s1.baseZRange) {
+        log(
+          `  底面Z ${s1.baseZRange[0].toFixed(1)}〜${s1.baseZRange[1].toFixed(1)}m` +
+            ` / 高さ ${s1.heightRange![0].toFixed(1)}〜${s1.heightRange![1].toFixed(1)}m`,
+        );
+      }
+      log("  ※ 届出は目視確認前。位置は街区の代表点、形は近似");
+    } catch (e) {
+      fail("stage1", e);
     }
   }
 

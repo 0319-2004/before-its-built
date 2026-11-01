@@ -40,6 +40,9 @@ def text(value) -> str | None:
     s = unicodedata.normalize("NFKC", str(value))
     s = re.sub(r"\s+", "", s)
     s = s.replace("ケ", "ヶ")
+    # 「自由が丘」「緑が丘」「東が丘」は、位置参照情報が「が丘」、
+    # 看板や届出が「ヶ丘」と書くことがある。街区の代表点を引けるようにそろえる。
+    s = s.replace("が丘", "ヶ丘")
     s = re.sub(r"[‐‑‒–—―−]", "-", s)  # 長音「ー」は名前の一部なので触らない
     s = re.sub(r"[,，]", "、", s)
     s = re.sub(r"(\d+)丁目", lambda m: _kanji_number(int(m.group(1))) + "丁目", s)
