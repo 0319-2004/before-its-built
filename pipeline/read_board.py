@@ -85,6 +85,10 @@ JSONだけを返してください。前置きやコードブロックは付け�
 
 ルール:
 - 推測で埋めない。読めないものは "unreadable" にする。
+- **ほかの欄から逆算して数字を埋めてはいけない。** 「9階建てだから高さは30m台のはず」
+  のように、階数や面積から辻褄の合う桁を決めるようなことはしない。
+  桁の一部が潰れていて読めなければ、その項目は "unreadable" にする。
+  ほかの欄と合っているかはこちらがコードで確かめるので、合わせようとしなくてよい。
 - 高さの欄は「高さ ○m（塔屋等まで ○m、軒高 ○m）」の書式が多い。3つを取り違えないこと。
   上段の数値（カッコの外）→ height_m
   カッコ内の「塔屋等まで」「最高」→ max_height_m
@@ -105,23 +109,78 @@ JSONだけを返してください。前置きやコードブロックは付け�
 """
 
 
-def ask(image_path: Path, prompt: str, effort: str) -> dict:
+def close_brackets(body: str) -> str:
+    """開いたままの括弧を閉じる。**足すのは閉じ括弧だけ**で、中身は補わない。
+
+    文字列の中の括弧とエスケープは数えない。
+    """
+    stack, in_string, escaped = [], False, False
+    for ch in body:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch in "{[":
+            stack.append("}" if ch == "{" else "]")
+        elif ch in "}]" and stack:
+            stack.pop()
+    return body + ('"' if in_string else "") + "".join(reversed(stack))
+
+
+def parse_json(text: str) -> tuple[dict, bool]:
+    """モデルの返事をJSONにする。閉じ括弧が足りないだけなら閉じて読み直す。
+
+    notice_type が "other" の短い形を返すとき、閉じ括弧を1つ落とすことがある（実測）。
+    **閉じ括弧を足す以外の手当てはしない。** 中身を補うと、読めなかったものを
+    「読めた」ことにしてしまう。閉じて読めたかどうかは呼び出し側に返す。
+    """
+    body = text.strip().removeprefix("```json").removesuffix("```").strip()
+    try:
+        return json.loads(body), False
+    except json.JSONDecodeError:
+        pass
+    repaired = close_brackets(body)
+    if repaired != body:
+        try:
+            return json.loads(repaired), True
+        except json.JSONDecodeError:
+            pass
+    raise ValueError("モデルの返事がJSONとして読めませんでした"
+                     "（写真ではなくモデルの出力の問題）: " + body[:200])
+
+
+def ask(image_path: Path, prompt: str, effort: str, attempts: int = 2) -> dict:
     mime = mimetypes.guess_type(image_path)[0] or "image/jpeg"
     data_url = f"data:{mime};base64," + base64.b64encode(image_path.read_bytes()).decode()
-    response = client.responses.create(
-        model="muse-spark-1.3",
-        input=[{
-            "role": "user",
-            "content": [
-                {"type": "input_text", "text": prompt},
-                {"type": "input_image", "image_url": data_url},
-            ],
-        }],
-        reasoning={"effort": effort},
-        store=False,
-    )
-    text = response.output_text.strip().removeprefix("```json").removesuffix("```").strip()
-    return json.loads(text)
+    failure = None
+    for _ in range(attempts):
+        response = client.responses.create(
+            model="muse-spark-1.3",
+            input=[{
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": prompt},
+                    {"type": "input_image", "image_url": data_url},
+                ],
+            }],
+            reasoning={"effort": effort},
+            store=False,
+        )
+        try:
+            result, repaired = parse_json(response.output_text)
+        except ValueError as e:
+            failure = e
+            continue
+        if repaired:
+            result["json_repaired"] = True
+        return result
+    raise failure
 
 
 def read_board(image_path: Path) -> dict:
@@ -270,6 +329,30 @@ def check_consistency(fields: dict) -> list[dict]:
         add("延べ面積が 建築面積×階数 を大きく超えている",
             "total_floor_area_m2", "building_area_m2", "floors_above")
     return issues
+
+
+# モデルの自己申告の確信度が、これより低い項目を「自信なし」として扱う。
+# 評価（evaluate.py）もこの境目を使うので、ここを正本にする。
+LOW_CONFIDENCE = 0.9
+
+
+def low_confidence_fields(result: dict) -> list[dict]:
+    """モデルが自信を持てなかった項目。確信度が低いまま3Dに使わせないために返す。
+
+    看板が遠い・潰れているときに、モデルが階数などから桁を補って
+    「もっともらしい値」を書くことがある。そうなると数値どうしの検算
+    （`check_consistency`）では捕まらないので、確信度の側で拾う。
+    """
+    low = []
+    for name, field in (result.get("fields") or {}).items():
+        if not isinstance(field, dict):
+            continue
+        confidence = field.get("confidence")
+        if field.get("status") == "read" and confidence is not None \
+                and confidence < LOW_CONFIDENCE:
+            low.append({"field": name, "value": field.get("value"),
+                        "confidence": confidence, "note": field.get("note")})
+    return low
 
 
 def is_other_board(result: dict) -> bool:

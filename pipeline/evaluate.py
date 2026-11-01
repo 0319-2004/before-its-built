@@ -23,16 +23,14 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 import normalize
-from read_board import is_other_board
+# 「自信なし」の境目は read_board.py を正本にする（読み取り側と評価側でずらさないため）
+from read_board import LOW_CONFIDENCE, is_other_board
 
 FILINGS_CSV = Path("data/meguro/filings_extracted.csv")
 READINGS_DIR = Path("samples/out")
 PHOTO_PREFIX = "data/photos"  # 自分で撮った写真だけを評価に使う（拾い画像は評価に入れない）
 EVAL_DIR = Path("data/eval")
 SUMMARY_MD = Path("docs/eval-summary.md")
-
-# モデルの自己申告の確信度が、これより低い項目を「自信なし」として数える。
-LOW_CONFIDENCE = 0.9
 
 MATCH, MISMATCH = "一致", "不一致"
 BOTH_ABSENT, ONLY_BOARD, ONLY_FILING = "両方なし", "看板だけ", "届出だけ"

@@ -1,0 +1,1269 @@
+{
+ "generated": "2026-11-02",
+ "model": "muse-spark-1.3",
+ "note": "撮った看板の写真をエージェントに通した結果を、そのまま保存したもの。画面を開いたときにモデルは呼ばれない。届出は目視確認が済んでいないので「確認前」の印が付く。位置は街区の代表点、形は建築面積と同じ面積の北向きの正方形で、いずれも近似。",
+ "outcomes": {
+  "built": "届出と照合でき、3Dに立てられる",
+  "mismatch_notified": "読み直しても残った食い違いを利用者に知らせる",
+  "needs_review": "届出と照合できない、または矛盾が残るので要確認",
+  "needs_retake": "撮り直しを頼む"
+ },
+ "sources": [
+  "目黒区 中高層建築物の標識設置届（目黒区オープンデータ CC BY 4.0） https://www.city.meguro.tokyo.jp/opendata/",
+  "国土交通省 街区レベル位置参照情報（目黒区、2025年版）",
+  "3D都市モデル（Project PLATEAU）目黒区（2025年度）/ 国土交通省 を加工して作成"
+ ],
+ "samples": [
+  {
+   "id": "IMG_3922",
+   "label": "対象外の看板",
+   "outcome": "needs_retake",
+   "outcome_label": "撮り直しを頼む",
+   "summary": "建築計画のお知らせではなく労災保険関係成立票等の看板のため、建築計画のお知らせを撮り直してください",
+   "unresolved": [],
+   "filing_no": null,
+   "match_key": null,
+   "filing_verified": null,
+   "status_label": null,
+   "values": {
+    "notice_type": {
+     "value": "other",
+     "status": "read",
+     "confidence": 1.0
+    }
+   },
+   "steps": [
+    {
+     "n": 1,
+     "tool": "read_board",
+     "tool_label": "看板を読む",
+     "thought": "看板を読み取ります。",
+     "detail": "建築計画のお知らせではない看板（労災保険関係成立票や許可票）",
+     "input": {},
+     "ms": 11053,
+     "failed": false
+    },
+    {
+     "n": 2,
+     "tool": "request_retake",
+     "tool_label": "撮り直しを頼む",
+     "thought": "確認の結果、撮り直しを依頼します。",
+     "detail": "建築計画のお知らせではなく労災保険関係成立票等の看板のため、建築計画のお知らせを撮り直してください",
+     "input": {
+      "reason": "建築計画のお知らせではなく労災保険関係成立票等の看板のため、建築計画のお知らせを撮り直してください"
+     },
+     "ms": 0,
+     "failed": false
+    }
+   ],
+   "volume": null,
+   "boards_found": 1,
+   "photo_published": false,
+   "photo_note": "看板には建築主・設計者・施工者の氏名が印刷されているため、写真は公開していません。読み取った値だけを出しています"
+  },
+  {
+   "id": "IMG_3925",
+   "label": "青葉台一丁目23番／店舗(飲食店)、事務所",
+   "outcome": "built",
+   "outcome_label": "届出と照合でき、3Dに立てられる",
+   "summary": "届出と照合でき、3Dに配置しました。地番1349-4、青葉台一丁目23番で一致。",
+   "unresolved": [],
+   "filing_no": 37,
+   "match_key": "地番 1349-4",
+   "filing_verified": false,
+   "status_label": "確認前",
+   "values": {
+    "notice_type": {
+     "value": "building",
+     "status": "read",
+     "confidence": 1.0
+    },
+    "use": {
+     "value": "店舗(飲食店)、事務所",
+     "status": "read",
+     "confidence": 0.95
+    },
+    "site_area_m2": {
+     "value": 126.59,
+     "status": "read",
+     "confidence": 1.0
+    },
+    "building_area_m2": {
+     "value": 87.49,
+     "status": "read",
+     "confidence": 1.0
+    },
+    "total_floor_area_m2": {
+     "value": 385.6,
+     "status": "read",
+     "confidence": 1.0
+    },
+    "structure": {
+     "value": "RC造",
+     "status": "read",
+     "confidence": 1.0
+    },
+    "floors_above": {
+     "value": 5,
+     "status": "read",
+     "confidence": 1.0
+    },
+    "floors_below": {
+     "value": 0,
+     "status": "read",
+     "confidence": 1.0
+    },
+    "height_m": {
+     "value": 16.9,
+     "status": "read",
+     "confidence": 1.0
+    },
+    "max_height_m": {
+     "value": 18.9,
+     "status": "read",
+     "confidence": 1.0
+    },
+    "construction_start": {
+     "value": "2026-10-15",
+     "status": "read",
+     "confidence": 1.0
+    },
+    "construction_end": {
+     "value": "2027-11-30",
+     "status": "read",
+     "confidence": 1.0
+    },
+    "notice_posted": {
+     "value": "2026-07-21",
+     "status": "read",
+     "confidence": 1.0
+    },
+    "lot": {
+     "value": "1349-4",
+     "status": "read"
+    },
+    "address": {
+     "value": "青葉台一丁目23番",
+     "status": "read"
+    }
+   },
+   "steps": [
+    {
+     "n": 1,
+     "tool": "read_board",
+     "tool_label": "看板を読む",
+     "thought": "写真を確認しました。看板の読み取りを始めます。",
+     "detail": "14項目を読んだ",
+     "input": {},
+     "ms": 31571,
+     "failed": false
+    },
+    {
+     "n": 2,
+     "tool": "check_consistency",
+     "tool_label": "数値の矛盾を検算する",
+     "thought": null,
+     "detail": "矛盾なし",
+     "input": {},
+     "ms": 0,
+     "failed": false
+    },
+    {
+     "n": 3,
+     "tool": "lookup_filing",
+     "tool_label": "区の届出と照合する",
+     "thought": "看板の数値に矛盾はありません。届出との照合を進めます。",
+     "detail": "地番 1349-4 で届出No.37に一致／17項目が一致",
+     "input": {
+      "parcel": "1349-4"
+     },
+     "ms": 11,
+     "failed": false
+    },
+    {
+     "n": 4,
+     "tool": "geocode",
+     "tool_label": "住居表示を座標にする",
+     "thought": null,
+     "detail": "青葉台一丁目23番の街区の代表点 35.646624, 139.696936（街区の中のどこかは不明）",
+     "input": {
+      "block": 23,
+      "chome": "青葉台一丁目"
+     },
+     "ms": 42,
+     "failed": false
+    },
+    {
+     "n": 5,
+     "tool": "extrude",
+     "tool_label": "ボリュームを作る",
+     "thought": null,
+     "detail": "一辺 9.35m・高さ 18.9m（底面 46.37m → 天面 65.27m、楕円体高）",
+     "input": {
+      "building_area_m2": 87.49,
+      "height_m": 18.9
+     },
+     "ms": 2067,
+     "failed": false
+    },
+    {
+     "n": 6,
+     "tool": "finish",
+     "tool_label": "結論を出す",
+     "thought": null,
+     "detail": "届出と照合でき、3Dに立てられる",
+     "input": {
+      "outcome": "built",
+      "summary": "届出と照合でき、3Dに配置しました。地番1349-4、青葉台一丁目23番で一致。",
+      "unresolved": []
+     },
+     "ms": 0,
+     "failed": false
+    }
+   ],
+   "volume": {
+    "footprint": [
+     [
+      139.69688436,
+      35.64658185
+     ],
+     [
+      139.69698764,
+      35.64658185
+     ],
+     [
+      139.69698764,
+      35.64666615
+     ],
+     [
+      139.69688436,
+      35.64666615
+     ],
+     [
+      139.69688436,
+      35.64658185
+     ]
+    ],
+    "position": "block_representative_point",
+    "shape": "square_north",
+    "building_area_m2": 87.49,
+    "display_height_m": 18.9,
+    "display_height_source": "max_height_m",
+    "base_z_m": 46.37,
+    "base_z_samples": 42,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false
+   },
+   "boards_found": 1,
+   "photo_published": false,
+   "photo_note": "看板には建築主・設計者・施工者の氏名が印刷されているため、写真は公開していません。読み取った値だけを出しています"
+  },
+  {
+   "id": "IMG_3928",
+   "label": "上目黒三丁目17番／一戸建ての住宅",
+   "outcome": "built",
+   "outcome_label": "届出と照合でき、3Dに立てられる",
+   "summary": "地番1760-22の届出と一致し、3Dに配置しました。",
+   "unresolved": [],
+   "filing_no": 51,
+   "match_key": "地番 1760-22",
+   "filing_verified": false,
+   "status_label": "確認前",
+   "values": {
+    "notice_type": {
+     "value": "building",
+     "status": "read",
+     "confidence": 1.0
+    },
+    "use": {
+     "value": "一戸建ての住宅",
+     "status": "read",
+     "confidence": 0.95
+    },
+    "site_area_m2": {
+     "value": 100.71,
+     "status": "read",
+     "confidence": 0.95
+    },
+    "building_area_m2": {
+     "value": 70.38,
+     "status": "read",
+     "confidence": 0.95
+    },
+    "total_floor_area_m2": {
+     "value": 155.28,
+     "status": "read",
+     "confidence": 0.95
+    },
+    "structure": {
+     "value": "木造",
+     "status": "read",
+     "confidence": 0.95
+    },
+    "floors_above": {
+     "value": 3,
+     "status": "read",
+     "confidence": 0.99
+    },
+    "floors_below": {
+     "value": 0,
+     "status": "read",
+     "confidence": 0.99
+    },
+    "height_m": {
+     "value": 9.281,
+     "status": "read",
+     "confidence": 0.95
+    },
+    "construction_start": {
+     "value": "2026-10-15",
+     "status": "read",
+     "confidence": 0.99
+    },
+    "construction_end": {
+     "value": "2027-03-15",
+     "status": "read",
+     "confidence": 0.99
+    },
+    "notice_posted": {
+     "value": "2026-09-02",
+     "status": "read",
+     "confidence": 0.99
+    },
+    "lot": {
+     "value": "1760-22",
+     "status": "read"
+    },
+    "address": {
+     "value": "上目黒三丁目17番",
+     "status": "read"
+    }
+   },
+   "steps": [
+    {
+     "n": 1,
+     "tool": "read_board",
+     "tool_label": "看板を読む",
+     "thought": "看板を確認します。",
+     "detail": "13項目を読んだ",
+     "input": {},
+     "ms": 16273,
+     "failed": false
+    },
+    {
+     "n": 2,
+     "tool": "check_consistency",
+     "tool_label": "数値の矛盾を検算する",
+     "thought": null,
+     "detail": "矛盾なし",
+     "input": {},
+     "ms": 0,
+     "failed": false
+    },
+    {
+     "n": 3,
+     "tool": "lookup_filing",
+     "tool_label": "区の届出と照合する",
+     "thought": "数値に矛盾はありません。届出と照合します。",
+     "detail": "地番 1760-22 で届出No.51に一致／15項目が一致",
+     "input": {
+      "parcel": "1760-22"
+     },
+     "ms": 1,
+     "failed": false
+    },
+    {
+     "n": 4,
+     "tool": "geocode",
+     "tool_label": "住居表示を座標にする",
+     "thought": null,
+     "detail": "上目黒三丁目17番の街区の代表点 35.645550, 139.695249（街区の中のどこかは不明）",
+     "input": {
+      "block": 17,
+      "chome": "上目黒三丁目"
+     },
+     "ms": 0,
+     "failed": false
+    },
+    {
+     "n": 5,
+     "tool": "extrude",
+     "tool_label": "ボリュームを作る",
+     "thought": null,
+     "detail": "一辺 8.39m・高さ 9.281m（底面 51.72m → 天面 61.0m、楕円体高）",
+     "input": {
+      "building_area_m2": 70.38,
+      "height_m": 9.281
+     },
+     "ms": 9,
+     "failed": false
+    },
+    {
+     "n": 6,
+     "tool": "finish",
+     "tool_label": "結論を出す",
+     "thought": null,
+     "detail": "届出と照合でき、3Dに立てられる",
+     "input": {
+      "outcome": "built",
+      "summary": "地番1760-22の届出と一致し、3Dに配置しました。",
+      "unresolved": []
+     },
+     "ms": 0,
+     "failed": false
+    }
+   ],
+   "volume": {
+    "footprint": [
+     [
+      139.69520268,
+      35.64551219
+     ],
+     [
+      139.69529532,
+      35.64551219
+     ],
+     [
+      139.69529532,
+      35.64558781
+     ],
+     [
+      139.69520268,
+      35.64558781
+     ],
+     [
+      139.69520268,
+      35.64551219
+     ]
+    ],
+    "position": "block_representative_point",
+    "shape": "square_north",
+    "building_area_m2": 70.38,
+    "display_height_m": 9.281,
+    "display_height_source": "height_m",
+    "base_z_m": 51.72,
+    "base_z_samples": 58,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false
+   },
+   "boards_found": 1,
+   "photo_published": false,
+   "photo_note": "看板には建築主・設計者・施工者の氏名が印刷されているため、写真は公開していません。読み取った値だけを出しています"
+  },
+  {
+   "id": "IMG_3931",
+   "label": "上目黒三丁目20番／共同住宅",
+   "outcome": "built",
+   "outcome_label": "届出と照合でき、3Dに立てられる",
+   "summary": "届出と照合でき3Dに立てました。高さの欄名のみ違いは実質一致。",
+   "unresolved": [],
+   "filing_no": 3,
+   "match_key": "地番 1735-20",
+   "filing_verified": false,
+   "status_label": "確認前",
+   "values": {
+    "notice_type": {
+     "value": "building",
+     "status": "read",
+     "confidence": 0.99
+    },
+    "use": {
+     "value": "共同住宅",
+     "status": "read",
+     "confidence": 0.98
+    },
+    "site_area_m2": {
+     "value": 400.1,
+     "status": "read",
+     "confidence": 0.98
+    },
+    "building_area_m2": {
+     "value": 255.86,
+     "status": "read",
+     "confidence": 0.98
+    },
+    "total_floor_area_m2": {
+     "value": 503.48,
+     "status": "read",
+     "confidence": 0.97
+    },
+    "structure": {
+     "value": "木造",
+     "status": "read",
+     "confidence": 0.9
+    },
+    "floors_above": {
+     "value": 2,
+     "status": "read",
+     "confidence": 0.99
+    },
+    "floors_below": {
+     "value": 1,
+     "status": "read",
+     "confidence": 0.99
+    },
+    "max_height_m": {
+     "value": 9.909,
+     "status": "read",
+     "confidence": 0.97
+    },
+    "eave_height_m": {
+     "value": 7.1,
+     "status": "read",
+     "confidence": 0.97
+    },
+    "units": {
+     "value": 4,
+     "status": "read",
+     "confidence": 0.98
+    },
+    "construction_start": {
+     "value": "2027-01-15",
+     "status": "read",
+     "confidence": 0.98
+    },
+    "construction_end": {
+     "value": "2028-05-10",
+     "status": "read",
+     "confidence": 0.98
+    },
+    "notice_posted": {
+     "value": "2026-03-30",
+     "status": "read",
+     "confidence": 0.98
+    },
+    "lot": {
+     "value": "1735-20",
+     "status": "read"
+    },
+    "address": {
+     "value": "上目黒三丁目20番",
+     "status": "read"
+    }
+   },
+   "steps": [
+    {
+     "n": 1,
+     "tool": "read_board",
+     "tool_label": "看板を読む",
+     "thought": "看板を確認します。",
+     "detail": "15項目を読んだ",
+     "input": {},
+     "ms": 17415,
+     "failed": false
+    },
+    {
+     "n": 2,
+     "tool": "check_consistency",
+     "tool_label": "数値の矛盾を検算する",
+     "thought": null,
+     "detail": "矛盾なし",
+     "input": {},
+     "ms": 0,
+     "failed": false
+    },
+    {
+     "n": 3,
+     "tool": "lookup_filing",
+     "tool_label": "区の届出と照合する",
+     "thought": null,
+     "detail": "地番 1735-20 で届出No.3に一致／18項目が一致",
+     "input": {
+      "parcel": "1735-20"
+     },
+     "ms": 2,
+     "failed": false
+    },
+    {
+     "n": 4,
+     "tool": "geocode",
+     "tool_label": "住居表示を座標にする",
+     "thought": "届出と一致しましたので、位置を特定して3D化します。",
+     "detail": "上目黒三丁目20番の街区の代表点 35.645383, 139.694593（街区の中のどこかは不明）",
+     "input": {
+      "block": 20,
+      "chome": "上目黒三丁目"
+     },
+     "ms": 0,
+     "failed": false
+    },
+    {
+     "n": 5,
+     "tool": "extrude",
+     "tool_label": "ボリュームを作る",
+     "thought": null,
+     "detail": "一辺 16.0m・高さ 9.909m（底面 56.12m → 天面 66.03m、楕円体高）",
+     "input": {
+      "building_area_m2": 255.86,
+      "height_m": 9.909
+     },
+     "ms": 14,
+     "failed": false
+    },
+    {
+     "n": 6,
+     "tool": "finish",
+     "tool_label": "結論を出す",
+     "thought": null,
+     "detail": "届出と照合でき、3Dに立てられる",
+     "input": {
+      "outcome": "built",
+      "summary": "届出と照合でき3Dに立てました。高さの欄名のみ違いは実質一致。",
+      "unresolved": []
+     },
+     "ms": 0,
+     "failed": false
+    }
+   ],
+   "volume": {
+    "footprint": [
+     [
+      139.69450469,
+      35.64531092
+     ],
+     [
+      139.69468131,
+      35.64531092
+     ],
+     [
+      139.69468131,
+      35.64545508
+     ],
+     [
+      139.69450469,
+      35.64545508
+     ],
+     [
+      139.69450469,
+      35.64531092
+     ]
+    ],
+    "position": "block_representative_point",
+    "shape": "square_north",
+    "building_area_m2": 255.86,
+    "display_height_m": 9.909,
+    "display_height_source": "max_height_m",
+    "base_z_m": 56.12,
+    "base_z_samples": 53,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false
+   },
+   "boards_found": 1,
+   "photo_published": false,
+   "photo_note": "看板には建築主・設計者・施工者の氏名が印刷されているため、写真は公開していません。読み取った値だけを出しています"
+  },
+  {
+   "id": "IMG_3933",
+   "label": "対象外の看板",
+   "outcome": "needs_retake",
+   "outcome_label": "撮り直しを頼む",
+   "summary": "建築計画のお知らせ以外の看板のため、建築計画のお知らせを正面から撮り直してください。",
+   "unresolved": [],
+   "filing_no": null,
+   "match_key": null,
+   "filing_verified": null,
+   "status_label": null,
+   "values": {
+    "notice_type": {
+     "value": "other",
+     "status": "read",
+     "confidence": 0.95
+    }
+   },
+   "steps": [
+    {
+     "n": 1,
+     "tool": "read_board",
+     "tool_label": "看板を読む",
+     "thought": "看板を読み取ります。",
+     "detail": "建築計画のお知らせではない看板（労災保険関係成立票や許可票）",
+     "input": {},
+     "ms": 9532,
+     "failed": false
+    },
+    {
+     "n": 2,
+     "tool": "read_board",
+     "tool_label": "看板を読む",
+     "thought": "もう1枚の看板を確認します。",
+     "detail": "建築計画のお知らせではない看板（労災保険関係成立票や許可票）",
+     "input": {
+      "board": 1
+     },
+     "ms": 3260,
+     "failed": false
+    },
+    {
+     "n": 3,
+     "tool": "request_retake",
+     "tool_label": "撮り直しを頼む",
+     "thought": null,
+     "detail": "建築計画のお知らせ以外の看板のため、建築計画のお知らせを正面から撮り直してください。",
+     "input": {
+      "reason": "建築計画のお知らせ以外の看板のため、建築計画のお知らせを正面から撮り直してください。"
+     },
+     "ms": 0,
+     "failed": false
+    }
+   ],
+   "volume": null,
+   "boards_found": 2,
+   "photo_published": false,
+   "photo_note": "看板には建築主・設計者・施工者の氏名が印刷されているため、写真は公開していません。読み取った値だけを出しています"
+  },
+  {
+   "id": "IMG_3936",
+   "label": "上目黒三丁目19番／一戸建ての住宅",
+   "outcome": "mismatch_notified",
+   "outcome_label": "読み直しても残った食い違いを利用者に知らせる",
+   "summary": "3Dボリュームを作成したが、敷地面積が看板と届出で異なるため通知する。",
+   "unresolved": [
+    "敷地面積が看板71.87㎡と届出70.32㎡で不一致（地番1735-8、（名称は非公開））。読み直しても一致せず。"
+   ],
+   "filing_no": 67,
+   "match_key": "地番 1735-8",
+   "filing_verified": false,
+   "status_label": "確認前",
+   "values": {
+    "notice_type": {
+     "value": "building",
+     "status": "read",
+     "confidence": 0.99
+    },
+    "use": {
+     "value": "一戸建ての住宅",
+     "status": "read",
+     "confidence": 0.95
+    },
+    "site_area_m2": {
+     "value": 71.87,
+     "status": "read",
+     "confidence": 0.95
+    },
+    "building_area_m2": {
+     "value": 46.37,
+     "status": "read",
+     "confidence": 0.95
+    },
+    "total_floor_area_m2": {
+     "value": 111.37,
+     "status": "read",
+     "confidence": 0.9
+    },
+    "structure": {
+     "value": "木造",
+     "status": "read",
+     "confidence": 0.98
+    },
+    "floors_above": {
+     "value": 3,
+     "status": "read",
+     "confidence": 0.95
+    },
+    "floors_below": {
+     "value": 0,
+     "status": "read",
+     "confidence": 0.9
+    },
+    "max_height_m": {
+     "value": 8.72,
+     "status": "read",
+     "confidence": 0.9
+    },
+    "eave_height_m": {
+     "value": 7.881,
+     "status": "read",
+     "confidence": 0.85
+    },
+    "construction_start": {
+     "value": "2026-11-16",
+     "status": "read",
+     "confidence": 0.95
+    },
+    "construction_end": {
+     "value": "2027-03-22",
+     "status": "read",
+     "confidence": 0.95
+    },
+    "notice_posted": {
+     "value": "2026-09-09",
+     "status": "read",
+     "confidence": 0.97
+    },
+    "lot": {
+     "value": "1735-8",
+     "status": "read"
+    },
+    "address": {
+     "value": "上目黒三丁目19番",
+     "status": "read"
+    }
+   },
+   "steps": [
+    {
+     "n": 1,
+     "tool": "read_board",
+     "tool_label": "看板を読む",
+     "thought": "看板を読み取ります。",
+     "detail": "14項目を読んだ",
+     "input": {},
+     "ms": 20811,
+     "failed": false
+    },
+    {
+     "n": 2,
+     "tool": "check_consistency",
+     "tool_label": "数値の矛盾を検算する",
+     "thought": "読み取りを確認し、届出と照合します。",
+     "detail": "矛盾なし／確信度が低い項目: eave_height_m(0.85)",
+     "input": {},
+     "ms": 0,
+     "failed": false
+    },
+    {
+     "n": 3,
+     "tool": "lookup_filing",
+     "tool_label": "区の届出と照合する",
+     "thought": null,
+     "detail": "地番 1735-8 で届出No.67に一致／15項目が一致／不一致: 敷地面積（看板 71.87 ／ 届出 70.32）",
+     "input": {
+      "parcel": "1735-8"
+     },
+     "ms": 1,
+     "failed": false
+    },
+    {
+     "n": 4,
+     "tool": "reread_fields",
+     "tool_label": "項目を読み直す",
+     "thought": null,
+     "detail": "site_area_m2 を読み直したが値は変わらず",
+     "input": {
+      "fields": [
+       "site_area_m2"
+      ],
+      "reason": "届出の敷地面積70.32と食い違い（看板71.87）のため読み直し"
+     },
+     "ms": 4198,
+     "failed": false
+    },
+    {
+     "n": 5,
+     "tool": "geocode",
+     "tool_label": "住居表示を座標にする",
+     "thought": "敷地面積を読み直し、位置を特定します。",
+     "detail": "上目黒三丁目19番の街区の代表点 35.645702, 139.693869（街区の中のどこかは不明）",
+     "input": {
+      "block": 19,
+      "chome": "上目黒三丁目"
+     },
+     "ms": 0,
+     "failed": false
+    },
+    {
+     "n": 6,
+     "tool": "extrude",
+     "tool_label": "ボリュームを作る",
+     "thought": null,
+     "detail": "一辺 6.81m・高さ 8.72m（底面 55.59m → 天面 64.31m、楕円体高）",
+     "input": {
+      "building_area_m2": 46.37,
+      "height_m": 8.72
+     },
+     "ms": 11,
+     "failed": false
+    },
+    {
+     "n": 7,
+     "tool": "finish",
+     "tool_label": "結論を出す",
+     "thought": null,
+     "detail": "読み直しても残った食い違いを利用者に知らせる",
+     "input": {
+      "outcome": "mismatch_notified",
+      "summary": "3Dボリュームを作成したが、敷地面積が看板と届出で異なるため通知する。",
+      "unresolved": [
+       "敷地面積が看板71.87㎡と届出70.32㎡で不一致（地番1735-8、（名称は非公開））。読み直しても一致せず。"
+      ]
+     },
+     "ms": 0,
+     "failed": false
+    }
+   ],
+   "volume": {
+    "footprint": [
+     [
+      139.69383141,
+      35.64567131
+     ],
+     [
+      139.69390659,
+      35.64567131
+     ],
+     [
+      139.69390659,
+      35.64573269
+     ],
+     [
+      139.69383141,
+      35.64573269
+     ],
+     [
+      139.69383141,
+      35.64567131
+     ]
+    ],
+    "position": "block_representative_point",
+    "shape": "square_north",
+    "building_area_m2": 46.37,
+    "display_height_m": 8.72,
+    "display_height_source": "max_height_m",
+    "base_z_m": 55.59,
+    "base_z_samples": 43,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false
+   },
+   "boards_found": 1,
+   "photo_published": false,
+   "photo_note": "看板には建築主・設計者・施工者の氏名が印刷されているため、写真は公開していません。読み取った値だけを出しています"
+  },
+  {
+   "id": "IMG_3941",
+   "label": "上目黒三丁目32番／長屋＋共同住宅",
+   "outcome": "built",
+   "outcome_label": "届出と照合でき、3Dに立てられる",
+   "summary": "届出と一致し3Dに配置しました。",
+   "unresolved": [],
+   "filing_no": 25,
+   "match_key": "地番 1794-34",
+   "filing_verified": false,
+   "status_label": "確認前",
+   "values": {
+    "notice_type": {
+     "value": "building",
+     "status": "read",
+     "confidence": 0.99
+    },
+    "use": {
+     "value": "長屋＋共同住宅",
+     "status": "read",
+     "confidence": 0.97
+    },
+    "site_area_m2": {
+     "value": 347.91,
+     "status": "read",
+     "confidence": 0.99
+    },
+    "building_area_m2": {
+     "value": 186.16,
+     "status": "read",
+     "confidence": 0.99
+    },
+    "total_floor_area_m2": {
+     "value": 764.63,
+     "status": "read",
+     "confidence": 0.97
+    },
+    "structure": {
+     "value": "RC造",
+     "status": "read",
+     "confidence": 0.99
+    },
+    "floors_above": {
+     "value": 4,
+     "status": "read",
+     "confidence": 0.99
+    },
+    "floors_below": {
+     "value": 1,
+     "status": "read",
+     "confidence": 0.99
+    },
+    "height_m": {
+     "value": 9.95,
+     "status": "read",
+     "confidence": 0.9
+    },
+    "max_height_m": {
+     "value": 11.085,
+     "status": "read",
+     "confidence": 0.95
+    },
+    "construction_start": {
+     "value": "2026-09-15",
+     "status": "read",
+     "confidence": 0.99
+    },
+    "construction_end": {
+     "value": "2027-08-31",
+     "status": "read",
+     "confidence": 0.99
+    },
+    "notice_posted": {
+     "value": "2026-06-18",
+     "status": "read",
+     "confidence": 0.99
+    },
+    "lot": {
+     "value": "1794-34",
+     "status": "read"
+    },
+    "address": {
+     "value": "上目黒三丁目32番",
+     "status": "read"
+    }
+   },
+   "steps": [
+    {
+     "n": 1,
+     "tool": "read_board",
+     "tool_label": "看板を読む",
+     "thought": "看板を読み取ります。",
+     "detail": "14項目を読んだ",
+     "input": {},
+     "ms": 13576,
+     "failed": false
+    },
+    {
+     "n": 2,
+     "tool": "check_consistency",
+     "tool_label": "数値の矛盾を検算する",
+     "thought": "数値の矛盾を確認します。",
+     "detail": "矛盾なし",
+     "input": {},
+     "ms": 0,
+     "failed": false
+    },
+    {
+     "n": 3,
+     "tool": "lookup_filing",
+     "tool_label": "区の届出と照合する",
+     "thought": "届出と照合します。",
+     "detail": "地番 1794-34 で届出No.25に一致／17項目が一致",
+     "input": {
+      "parcel": "1794-34"
+     },
+     "ms": 2,
+     "failed": false
+    },
+    {
+     "n": 4,
+     "tool": "geocode",
+     "tool_label": "住居表示を座標にする",
+     "thought": "位置を取得して3D化します。",
+     "detail": "上目黒三丁目32番の街区の代表点 35.642605, 139.696293（街区の中のどこかは不明）",
+     "input": {
+      "block": 32,
+      "chome": "上目黒三丁目"
+     },
+     "ms": 0,
+     "failed": false
+    },
+    {
+     "n": 5,
+     "tool": "extrude",
+     "tool_label": "ボリュームを作る",
+     "thought": null,
+     "detail": "一辺 13.64m・高さ 11.085m（底面 49.9m → 天面 60.98m、楕円体高）",
+     "input": {
+      "building_area_m2": 186.16,
+      "height_m": 11.085
+     },
+     "ms": 12,
+     "failed": false
+    },
+    {
+     "n": 6,
+     "tool": "finish",
+     "tool_label": "結論を出す",
+     "thought": null,
+     "detail": "届出と照合でき、3Dに立てられる",
+     "input": {
+      "outcome": "built",
+      "summary": "届出と一致し3Dに配置しました。",
+      "unresolved": []
+     },
+     "ms": 0,
+     "failed": false
+    }
+   ],
+   "volume": {
+    "footprint": [
+     [
+      139.69621768,
+      35.64254351
+     ],
+     [
+      139.69636832,
+      35.64254351
+     ],
+     [
+      139.69636832,
+      35.64266649
+     ],
+     [
+      139.69621768,
+      35.64266649
+     ],
+     [
+      139.69621768,
+      35.64254351
+     ]
+    ],
+    "position": "block_representative_point",
+    "shape": "square_north",
+    "building_area_m2": 186.16,
+    "display_height_m": 11.085,
+    "display_height_source": "max_height_m",
+    "base_z_m": 49.9,
+    "base_z_samples": 42,
+    "base_z_radius_m": 60.0,
+    "base_z_rough": false
+   },
+   "boards_found": 1,
+   "photo_published": false,
+   "photo_note": "看板には建築主・設計者・施工者の氏名が印刷されているため、写真は公開していません。読み取った値だけを出しています"
+  },
+  {
+   "id": "IMG_3966",
+   "label": "目黒三丁目／共同住宅",
+   "outcome": "needs_retake",
+   "outcome_label": "撮り直しを頼む",
+   "summary": "高さの数値が不鮮明です（9階建てに対して11.985mと読めますが確信度が低く、読み直しても改善しませんでした）。高さ・最高高さがはっきり読めるよう、看板の高さ部分を正面から大きく撮り直してください。",
+   "unresolved": [],
+   "filing_no": null,
+   "match_key": null,
+   "filing_verified": null,
+   "status_label": null,
+   "values": {
+    "notice_type": {
+     "value": "building",
+     "status": "read",
+     "confidence": 0.99
+    },
+    "use": {
+     "value": "共同住宅",
+     "status": "read",
+     "confidence": 0.95
+    },
+    "site_area_m2": {
+     "value": 14032.33,
+     "status": "read",
+     "confidence": 0.9
+    },
+    "building_area_m2": {
+     "value": 6309.82,
+     "status": "read",
+     "confidence": 0.9
+    },
+    "total_floor_area_m2": {
+     "value": 20315.99,
+     "status": "read",
+     "confidence": 0.9
+    },
+    "structure": {
+     "value": "RC造",
+     "status": "read",
+     "confidence": 0.9
+    },
+    "floors_above": {
+     "value": 9,
+     "status": "read",
+     "confidence": 0.95
+    },
+    "floors_below": {
+     "value": 1,
+     "status": "read",
+     "confidence": 0.95
+    },
+    "height_m": {
+     "value": 11.985,
+     "status": "read",
+     "confidence": 0.5
+    },
+    "max_height_m": {
+     "value": 11.985,
+     "status": "read",
+     "confidence": 0.4
+    },
+    "construction_start": {
+     "value": "2025-12-01",
+     "status": "read",
+     "confidence": 0.95
+    },
+    "construction_end": {
+     "value": "2028-08",
+     "status": "read",
+     "confidence": 0.9
+    },
+    "notice_posted": {
+     "value": "2025-02-10",
+     "status": "read",
+     "confidence": 0.95
+    },
+    "lot": {
+     "value": "814-1、814-2",
+     "status": "read"
+    },
+    "address": {
+     "value": "目黒三丁目",
+     "status": "absent"
+    }
+   },
+   "steps": [
+    {
+     "n": 1,
+     "tool": "read_board",
+     "tool_label": "看板を読む",
+     "thought": "お預かりした看板の写真を処理します。",
+     "detail": "14項目を読んだ",
+     "input": {},
+     "ms": 13929,
+     "failed": false
+    },
+    {
+     "n": 2,
+     "tool": "check_consistency",
+     "tool_label": "数値の矛盾を検算する",
+     "thought": null,
+     "detail": "1階あたり 1.3m で、高さと階数が合わない可能性／確信度が低い項目: height_m(0.7)、max_height_m(0.65)",
+     "input": {},
+     "ms": 0,
+     "failed": false
+    },
+    {
+     "n": 3,
+     "tool": "reread_fields",
+     "tool_label": "項目を読み直す",
+     "thought": "高さの数値に確認が必要なため、読み直します。",
+     "detail": "height_m、max_height_m を読み直したが値は変わらず",
+     "input": {
+      "fields": [
+       "height_m",
+       "max_height_m"
+      ],
+      "reason": "3D表示に使う高さであり確信度が低いため、桁も含めて読み直しが必要。高さと階数(9階)の不整合も疑われる。"
+     },
+     "ms": 15609,
+     "failed": false
+    },
+    {
+     "n": 4,
+     "tool": "request_retake",
+     "tool_label": "撮り直しを頼む",
+     "thought": null,
+     "detail": "高さの数値が不鮮明です（9階建てに対して11.985mと読めますが確信度が低く、読み直しても改善しませんでした）。高さ・最高高さがはっきり読めるよう、看板の高さ部分を正面から大きく撮り直してください。",
+     "input": {
+      "reason": "高さの数値が不鮮明です（9階建てに対して11.985mと読めますが確信度が低く、読み直しても改善しませんでした）。高さ・最高高さがはっきり読めるよう、看板の高さ部分を正面から大きく撮り直してください。"
+     },
+     "ms": 0,
+     "failed": false
+    }
+   ],
+   "volume": null,
+   "boards_found": 1,
+   "photo_published": false,
+   "photo_note": "看板には建築主・設計者・施工者の氏名が印刷されているため、写真は公開していません。読み取った値だけを出しています"
+  }
+ ]
+}

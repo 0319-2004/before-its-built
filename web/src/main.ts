@@ -24,6 +24,10 @@
  * 段階2（計画建物＝青＋解体建物＝オレンジ）:
  *   http://localhost:5173/?stage=2&time=10
  *
+ * サンプルモード（審査員向け。判断の記録を1手ずつ流して3Dで立ち上げる）:
+ *   http://localhost:5173/?mode=sample
+ *   http://localhost:5173/?mode=sample&id=IMG_3936
+ *
  * 太陽の位置は既定で今の時刻。**夜に開くと建物が真っ黒になる**ので、
  * 見た目を確かめるときは現地の視太陽時を渡す:
  *   http://localhost:5173/?stage=1&time=10
@@ -36,6 +40,7 @@ import {
   type DefaultDescriptions,
 } from "@navaramap/three-default-plugin";
 
+import { runSampleMode } from "./sample";
 import { addStage0 } from "./stage0";
 import { addStage1 } from "./stage1";
 import { addStage2 } from "./stage2";
@@ -61,6 +66,7 @@ const diag = {
   stage0: null as unknown,
   stage1: null as unknown,
   stage2: null as unknown,
+  sample: null as unknown,
   /** 中目黒での太陽高度[度]。負なら夜で、建物が暗く写る。 */
   sunElevation: 0,
 };
@@ -118,7 +124,14 @@ async function main() {
   // 太陽の位置。既定は今の時刻なので、**夜に開くと建物が真っ黒になる**
   // （地図のラスタは照明を受けないので、地図だけが見えて建物が消えたように見える）。
   // `?time=10` で現地の視太陽時を指定できる。日影（冬至）もここを使う。
-  const solarHours = params.has("time") ? Number(params.get("time")) : null;
+  // サンプルモードは審査員が何も付けずに開くので、既定で昼にしておく
+  // （既定の「今の時刻」のままだと、夜に開いた人には建物が真っ黒に見える）。
+  const sampleMode = params.get("mode") === "sample";
+  const solarHours = params.has("time")
+    ? Number(params.get("time"))
+    : sampleMode
+      ? 10
+      : null;
   if (solarHours !== null) {
     view.atmosphere.setSolarTime({ lng: NAKAMEGURO.lng }, solarHours);
   }
@@ -209,6 +222,24 @@ async function main() {
         : `  **1棟に決まっていない**。候補 ${s2.targets}棟を薄く出す`);
     } catch (e) {
       fail("stage2", e);
+    }
+  }
+
+  // サンプルモード: 事前に計算したエージェントの判断の記録を流す（APIは呼ばない）。
+  // 診断用のHUDは審査員には要らないので隠す。
+  if (sampleMode) {
+    hud.style.display = "none";
+    try {
+      const s = await runSampleMode(view, {
+        id: params.get("id"),
+        fast: params.get("fast") === "1",
+      });
+      diag.sample = s;
+      log(`サンプルモード: ${s.count}件（3Dを立てた件 ${s.builtId ?? "なし"}）`);
+    } catch (e) {
+      // ここで落ちると審査員には真っ黒な画面しか残らないので、HUDを出し直す
+      hud.style.display = "";
+      fail("sample", e);
     }
   }
 
