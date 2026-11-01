@@ -28,10 +28,14 @@ const UNCONFIRMED = { opacity: 0.55, emissiveIntensity: 0.25 };
 const CONFIRMED = { opacity: 0.95, emissiveIntensity: 0.05 };
 
 /**
- * 既定の読み込み先。`web/public/` にあるので dev でもビルド後でも同じURL。
+ * 既定の読み込み先。`web/public/` に置いてある。
  * 中身は `pipeline/make_planned_geojson.py` が作る（個人名は入っていない）。
+ *
+ * **先頭に `/` を直接書かないこと。** GitHub Pages はリポジトリ名のサブパスで
+ * 配るので、`/planned.geojson` にすると404になる。`BASE_URL` は dev なら `/`、
+ * ビルドなら `/before-its-built/` で、どちらも末尾に `/` が付く。
  */
-export const PLANNED_URL = "/planned.geojson";
+export const PLANNED_URL = `${import.meta.env.BASE_URL}planned.geojson`;
 
 type PlannedProperties = {
   filing_no: number | null;

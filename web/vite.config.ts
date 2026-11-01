@@ -62,7 +62,14 @@ const headers =
       }
     : undefined;
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // GitHub Pages はリポジトリ名のサブパスで配るので、本番だけ base を付ける
+  // （dev はルートのまま）。ルート配信の置き場所に移すときは BASE_PATH=/ を渡す。
+  //
+  // `command` ではなく `mode` で分けること。`vite preview` の command は
+  // "serve" なので、command で分けると preview だけ base なしで配られ、
+  // ビルド済みのHTMLが指す /before-its-built/… が全部404になる。
+  base: process.env.BASE_PATH ?? (mode === "production" ? "/before-its-built/" : "/"),
   plugins: [copyNavaraAssets()],
   server: { headers },
   preview: { headers },
@@ -76,4 +83,4 @@ export default defineConfig({
       "@navaramap/worker",
     ],
   },
-});
+}));

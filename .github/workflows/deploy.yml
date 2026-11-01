@@ -1,0 +1,83 @@
+# web/ をビルドして GitHub Pages に出す。
+#
+# 公開URL: https://0319-2004.github.io/before-its-built/
+#
+# サブパスで配るので、vite 側は base を付けてビルドする（web/vite.config.ts）。
+# コードから静的ファイルを読むときは `import.meta.env.BASE_URL` を通すこと。
+# 先頭に `/` を直接書くと、ここでだけ404になる。
+#
+# 読ませるデータ（web/public/planned.geojson）はリポジトリに入っているので、
+# ここで Python や data/ は要らない。作り直すのは手元で
+# `python pipeline/make_planned_geojson.py` を動かしてコミットする。
+name: Deploy web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 走っている途中に次の push が来たら、古いほうを止める
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: 依存を入れる
+        working-directory: web
+        run: npm ci
+
+      - name: ビルド
+        working-directory: web
+        run: npm run build
+
+      # NAVARA 同梱の WASM が出力に入っているか確かめる。
+      # これが欠けると PLATEAU の b3dm（Draco圧縮）が1枚も解けず、
+      # 街並みが丸ごと出ない。dev では再現しないのでここで止める。
+      - name: WASM が入っているか確かめる
+        working-directory: web
+        run: |
+          missing=0
+          for f in draco_decoder navara_wasm_font_worker_bg navara_wasm_bg; do
+            if ! ls dist/assets/ | grep -q "^${f}.*\.wasm$"; then
+              echo "::error::dist/assets に ${f}*.wasm がない"
+              missing=1
+            fi
+          done
+          test -f dist/planned.geojson || {
+            echo "::error::dist/planned.geojson がない"; missing=1; }
+          exit $missing
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
