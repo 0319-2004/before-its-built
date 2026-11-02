@@ -1,11 +1,11 @@
 {
  "type": "FeatureCollection",
  "metadata": {
-  "generated": "2026-11-01",
+  "generated": "2026-11-02",
   "count": 38,
   "confirmed": 0,
   "unconfirmed": 38,
-  "note": "届出の読み取り結果。目視確認が済んでいない行は「確認前」。位置は街区の代表点、形は建築面積と同じ面積の北向きの正方形で、いずれも近似。",
+  "note": "届出の読み取り結果。目視確認が済んでいない行は「確認前」。位置は街区の代表点、形は建築面積と同じ面積の正方形で、向きは周りの街並み（既存建物・道路・近傍の多数派）に合わせた、いずれも近似。",
   "sources": [
    "目黒区 中高層建築物の標識設置届（目黒区オープンデータ CC BY 4.0） https://www.city.meguro.tokyo.jp/opendata/",
    "国土交通省 街区レベル位置参照情報（目黒区、2025年版）",
@@ -40,8 +40,10 @@
     "base_z_samples": 53,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 40.0,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -53,24 +55,24 @@
     "coordinates": [
      [
       [
-       139.69450469,
-       35.64531092
+       139.69458213,
+       35.64528145
       ],
       [
-       139.69468131,
-       35.64531092
+       139.69471741,
+       35.64537413
       ],
       [
-       139.69468131,
-       35.64545508
+       139.69460387,
+       35.64548455
       ],
       [
-       139.69450469,
-       35.64545508
+       139.69446859,
+       35.64539187
       ],
       [
-       139.69450469,
-       35.64531092
+       139.69458213,
+       35.64528145
       ]
      ]
     ]
@@ -103,8 +105,10 @@
     "base_z_samples": 65,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 28.7,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -116,24 +120,24 @@
     "coordinates": [
      [
       [
-       139.69737034,
-       35.64155856
+       139.69740397,
+       35.64154231
       ],
       [
-       139.69748166,
-       35.64155856
+       139.69750157,
+       35.64158602
       ],
       [
-       139.69748166,
-       35.64164944
+       139.69744803,
+       35.64166569
       ],
       [
-       139.69737034,
-       35.64164944
+       139.69735043,
+       35.64162198
       ],
       [
-       139.69737034,
-       35.64155856
+       139.69740397,
+       35.64154231
       ]
      ]
     ]
@@ -166,8 +170,10 @@
     "base_z_samples": 113,
     "base_z_radius_m": 250.0,
     "base_z_rough": true,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 0.0,
+    "orientation_source": "north",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -229,8 +235,10 @@
     "base_z_samples": 422,
     "base_z_radius_m": 500.0,
     "base_z_rough": true,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 0.0,
+    "orientation_source": "north",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": "address_chome,address_block",
@@ -292,8 +300,10 @@
     "base_z_samples": 17,
     "base_z_radius_m": 250.0,
     "base_z_rough": true,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 0.0,
+    "orientation_source": "north",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -355,8 +365,10 @@
     "base_z_samples": 44,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 7.5,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -368,24 +380,24 @@
     "coordinates": [
      [
       [
-       139.70167674,
-       35.6379364
+       139.70168859,
+       35.63792792
       ],
       [
-       139.70184726,
-       35.6379364
+       139.70185764,
+       35.63794607
       ],
       [
-       139.70184726,
-       35.6380756
+       139.70183541,
+       35.63808408
       ],
       [
-       139.70167674,
-       35.6380756
+       139.70166636,
+       35.63806593
       ],
       [
-       139.70167674,
-       35.6379364
+       139.70168859,
+       35.63792792
       ]
      ]
     ]
@@ -418,8 +430,10 @@
     "base_z_samples": 42,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 31.6,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": "zoning,construction_end",
@@ -431,24 +445,24 @@
     "coordinates": [
      [
       [
-       139.69616482,
-       35.64250037
+       139.69625097,
+       35.64246106
       ],
       [
-       139.69642118,
-       35.64250037
+       139.69646933,
+       35.64257069
       ],
       [
-       139.69642118,
-       35.64270963
+       139.69633503,
+       35.64274894
       ],
       [
-       139.69616482,
-       35.64270963
+       139.69611667,
+       35.64263931
       ],
       [
-       139.69616482,
-       35.64250037
+       139.69625097,
+       35.64246106
       ]
      ]
     ]
@@ -481,8 +495,10 @@
     "base_z_samples": 61,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 38.9,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -494,24 +510,24 @@
     "coordinates": [
      [
       [
-       139.70205157,
-       35.63987349
+       139.70210204,
+       35.63985378
       ],
       [
-       139.70217043,
-       35.63987349
+       139.70219457,
+       35.63991468
       ],
       [
-       139.70217043,
-       35.63997051
+       139.70211996,
+       35.63999022
       ],
       [
-       139.70205157,
-       35.63997051
+       139.70202743,
+       35.63992932
       ],
       [
-       139.70205157,
-       35.63987349
+       139.70210204,
+       35.63985378
       ]
      ]
     ]
@@ -544,8 +560,10 @@
     "base_z_samples": 74,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 28.8,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": "lot_raw,address_raw,address_chome",
@@ -557,24 +575,24 @@
     "coordinates": [
      [
       [
-       139.68851059,
-       35.64172038
+       139.68853628,
+       35.64170798
       ],
       [
-       139.68859541,
-       35.64172038
+       139.6886106,
+       35.64174135
       ],
       [
-       139.68859541,
-       35.64178962
+       139.68856972,
+       35.64180202
       ],
       [
-       139.68851059,
-       35.64178962
+       139.6884954,
+       35.64176865
       ],
       [
-       139.68851059,
-       35.64172038
+       139.68853628,
+       35.64170798
       ]
      ]
     ]
@@ -607,8 +625,10 @@
     "base_z_samples": 42,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 31.6,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -620,24 +640,24 @@
     "coordinates": [
      [
       [
-       139.69621768,
-       35.64254351
+       139.6962683,
+       35.64252042
       ],
       [
-       139.69636832,
-       35.64254351
+       139.69639662,
+       35.64258484
       ],
       [
-       139.69636832,
-       35.64266649
+       139.6963177,
+       35.64268958
       ],
       [
-       139.69621768,
-       35.64266649
+       139.69618938,
+       35.64262516
       ],
       [
-       139.69621768,
-       35.64254351
+       139.6962683,
+       35.64252042
       ]
      ]
     ]
@@ -670,8 +690,10 @@
     "base_z_samples": 74,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 28.8,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -683,24 +705,24 @@
     "coordinates": [
      [
       [
-       139.68849144,
-       35.64170475
+       139.68852873,
+       35.64168675
       ],
       [
-       139.68861456,
-       35.64170475
+       139.6886366,
+       35.64173519
       ],
       [
-       139.68861456,
-       35.64180525
+       139.68857727,
+       35.64182325
       ],
       [
-       139.68849144,
-       35.64180525
+       139.6884694,
+       35.64177481
       ],
       [
-       139.68849144,
-       35.64170475
+       139.68852873,
+       35.64168675
       ]
      ]
     ]
@@ -733,8 +755,10 @@
     "base_z_samples": 20,
     "base_z_radius_m": 500.0,
     "base_z_rough": true,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 0.0,
+    "orientation_source": "north",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": "units_total,floors_below",
@@ -796,8 +820,10 @@
     "base_z_samples": 3,
     "base_z_radius_m": 250.0,
     "base_z_rough": true,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 0.0,
+    "orientation_source": "north",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": "use",
@@ -859,8 +885,10 @@
     "base_z_samples": 63,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 58.9,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": "units_total",
@@ -872,24 +900,24 @@
     "coordinates": [
      [
       [
-       139.69725657,
-       35.63863573
+       139.69731606,
+       35.6386222
       ],
       [
-       139.69734543,
-       35.63863573
+       139.69736201,
+       35.63868429
       ],
       [
-       139.69734543,
-       35.63870827
+       139.69728594,
+       35.6387218
       ],
       [
-       139.69725657,
-       35.63870827
+       139.69723999,
+       35.63865971
       ],
       [
-       139.69725657,
-       35.63863573
+       139.69731606,
+       35.6386222
       ]
      ]
     ]
@@ -922,8 +950,10 @@
     "base_z_samples": 84,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 38.4,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": "units_total,zoning",
@@ -935,24 +965,24 @@
     "coordinates": [
      [
       [
-       139.71103529,
-       35.63697258
+       139.71106856,
+       35.63695946
       ],
       [
-       139.71111471,
-       35.63697258
+       139.71113079,
+       35.63699974
       ],
       [
-       139.71111471,
-       35.63703742
+       139.71108144,
+       35.63705054
       ],
       [
-       139.71103529,
-       35.63703742
+       139.71101921,
+       35.63701026
       ],
       [
-       139.71103529,
-       35.63697258
+       139.71106856,
+       35.63695946
       ]
      ]
     ]
@@ -985,8 +1015,10 @@
     "base_z_samples": 36,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 32.3,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -998,24 +1030,24 @@
     "coordinates": [
      [
       [
-       139.69048114,
-       35.63403597
+       139.69052922,
+       35.63401433
       ],
       [
-       139.69062086,
-       35.63403597
+       139.69064737,
+       35.63407522
       ],
       [
-       139.69062086,
-       35.63415003
+       139.69057278,
+       35.63417167
       ],
       [
-       139.69048114,
-       35.63415003
+       139.69045463,
+       35.63411078
       ],
       [
-       139.69048114,
-       35.63403597
+       139.69052922,
+       35.63401433
       ]
      ]
     ]
@@ -1048,8 +1080,10 @@
     "base_z_samples": 54,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 54.4,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": "building_area_m2",
@@ -1061,24 +1095,24 @@
     "coordinates": [
      [
       [
-       139.68853266,
-       35.64040852
+       139.68857858,
+       35.64039647
       ],
       [
-       139.68860734,
-       35.64040852
+       139.6886221,
+       35.64044601
       ],
       [
-       139.68860734,
-       35.64046948
+       139.68856142,
+       35.64048153
       ],
       [
-       139.68853266,
-       35.64046948
+       139.6885179,
+       35.64043199
       ],
       [
-       139.68853266,
-       35.64040852
+       139.68857858,
+       35.64039647
       ]
      ]
     ]
@@ -1111,8 +1145,10 @@
     "base_z_samples": 54,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 54.4,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": "floors_below",
@@ -1124,24 +1160,24 @@
     "coordinates": [
      [
       [
-       139.68853189,
-       35.64040789
+       139.68857876,
+       35.64039559
       ],
       [
-       139.68860811,
-       35.64040789
+       139.68862318,
+       35.64044615
       ],
       [
-       139.68860811,
-       35.64047011
+       139.68856124,
+       35.64048241
       ],
       [
-       139.68853189,
-       35.64047011
+       139.68851682,
+       35.64043185
       ],
       [
-       139.68853189,
-       35.64040789
+       139.68857876,
+       35.64039559
       ]
      ]
     ]
@@ -1174,8 +1210,10 @@
     "base_z_samples": 42,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 54.3,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": "address_chome",
@@ -1187,24 +1225,24 @@
     "coordinates": [
      [
       [
-       139.69688436,
-       35.64658185
+       139.69694775,
+       35.64656517
       ],
       [
-       139.69698764,
-       35.64658185
+       139.69700808,
+       35.64663359
       ],
       [
-       139.69698764,
-       35.64666615
+       139.69692425,
+       35.64668283
       ],
       [
-       139.69688436,
-       35.64666615
+       139.69686392,
+       35.64661441
       ],
       [
-       139.69688436,
-       35.64658185
+       139.69694775,
+       35.64656517
       ]
      ]
     ]
@@ -1237,8 +1275,10 @@
     "base_z_samples": 55,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 43.6,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -1250,24 +1290,24 @@
     "coordinates": [
      [
       [
-       139.69058119,
-       35.64044932
+       139.69066595,
+       35.64041966
       ],
       [
-       139.69075681,
-       35.64044932
+       139.69079315,
+       35.64051851
       ],
       [
-       139.69075681,
-       35.64059268
+       139.69067205,
+       35.64062234
       ],
       [
-       139.69058119,
-       35.64059268
+       139.69054485,
+       35.64052349
       ],
       [
-       139.69058119,
-       35.64044932
+       139.69066595,
+       35.64041966
       ]
      ]
     ]
@@ -1300,8 +1340,10 @@
     "base_z_samples": 43,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 50.3,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -1313,24 +1355,24 @@
     "coordinates": [
      [
       [
-       139.69148798,
-       35.64628568
+       139.69152306,
+       35.64627535
       ],
       [
-       139.69155002,
-       35.64628568
+       139.69156268,
+       35.64631432
       ],
       [
-       139.69155002,
-       35.64633632
+       139.69151494,
+       35.64634665
       ],
       [
-       139.69148798,
-       35.64633632
+       139.69147532,
+       35.64630768
       ],
       [
-       139.69148798,
-       35.64628568
+       139.69152306,
+       35.64627535
       ]
      ]
     ]
@@ -1363,8 +1405,10 @@
     "base_z_samples": 41,
     "base_z_radius_m": 120.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 51.2,
+    "orientation_source": "nearest_road",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -1376,24 +1420,24 @@
     "coordinates": [
      [
       [
-       139.69609895,
-       35.63269242
+       139.69616471,
+       35.63267351
       ],
       [
-       139.69621305,
-       35.63269242
+       139.69623622,
+       35.63274611
       ],
       [
-       139.69621305,
-       35.63278558
+       139.69614729,
+       35.63280449
       ],
       [
-       139.69609895,
-       35.63278558
+       139.69607578,
+       35.63273189
       ],
       [
-       139.69609895,
-       35.63269242
+       139.69616471,
+       35.63267351
       ]
      ]
     ]
@@ -1426,8 +1470,10 @@
     "base_z_samples": 17,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 77.5,
+    "orientation_source": "nearest_road",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -1439,24 +1485,24 @@
     "coordinates": [
      [
       [
-       139.69357522,
-       35.63310061
+       139.69363644,
+       35.63309515
       ],
       [
-       139.69364478,
-       35.63310061
+       139.69365147,
+       35.63315058
       ],
       [
-       139.69364478,
-       35.63315739
+       139.69358356,
+       35.63316285
       ],
       [
-       139.69357522,
-       35.63315739
+       139.69356853,
+       35.63310742
       ],
       [
-       139.69357522,
-       35.63310061
+       139.69363644,
+       35.63309515
       ]
      ]
     ]
@@ -1489,8 +1535,10 @@
     "base_z_samples": 47,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 77.5,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -1502,24 +1550,24 @@
     "coordinates": [
      [
       [
-       139.68790133,
-       35.63948315
+       139.68804326,
+       35.63947044
       ],
       [
-       139.68806267,
-       35.63948315
+       139.68807824,
+       35.63959901
       ],
       [
-       139.68806267,
-       35.63961485
+       139.68792074,
+       35.63962756
       ],
       [
-       139.68790133,
-       35.63961485
+       139.68788576,
+       35.63949899
       ],
       [
-       139.68790133,
-       35.63948315
+       139.68804326,
+       35.63947044
       ]
      ]
     ]
@@ -1552,8 +1600,10 @@
     "base_z_samples": 39,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 61.4,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": "building_area_m2",
@@ -1565,24 +1615,24 @@
     "coordinates": [
      [
       [
-       139.71010886,
-       35.63855436
+       139.71018875,
+       35.6385377
       ],
       [
-       139.71022314,
-       35.63855436
+       139.71024354,
+       35.63861957
       ],
       [
-       139.71022314,
-       35.63864764
+       139.71014325,
+       35.6386643
       ],
       [
-       139.71010886,
-       35.63864764
+       139.71008846,
+       35.63858243
       ],
       [
-       139.71010886,
-       35.63855436
+       139.71018875,
+       35.6385377
       ]
      ]
     ]
@@ -1615,8 +1665,10 @@
     "base_z_samples": 98,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 80.7,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -1628,24 +1680,24 @@
     "coordinates": [
      [
       [
-       139.6922618,
-       35.64038702
+       139.69235339,
+       35.64038092
       ],
       [
-       139.6923622,
-       35.64038702
+       139.69236968,
+       35.64046179
       ],
       [
-       139.6923622,
-       35.64046898
+       139.69227061,
+       35.64047508
       ],
       [
-       139.6922618,
-       35.64046898
+       139.69225432,
+       35.64039421
       ],
       [
-       139.6922618,
-       35.64038702
+       139.69235339,
+       35.64038092
       ]
      ]
     ]
@@ -1678,8 +1730,10 @@
     "base_z_samples": 29,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 73.4,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -1691,24 +1745,24 @@
     "coordinates": [
      [
       [
-       139.70136222,
-       35.64379657
+       139.70146554,
+       35.64378426
       ],
       [
-       139.70148578,
-       35.64379657
+       139.70150086,
+       35.64388091
       ],
       [
-       139.70148578,
-       35.64389743
+       139.70138246,
+       35.64390974
       ],
       [
-       139.70136222,
-       35.64389743
+       139.70134714,
+       35.64381309
       ],
       [
-       139.70136222,
-       35.64379657
+       139.70146554,
+       35.64378426
       ]
      ]
     ]
@@ -1741,8 +1795,10 @@
     "base_z_samples": 58,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 48.3,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": "building_name,total_floor_area_m2",
@@ -1754,24 +1810,24 @@
     "coordinates": [
      [
       [
-       139.69520268,
-       35.64551219
+       139.69525274,
+       35.64549662
       ],
       [
-       139.69529532,
-       35.64551219
+       139.69531439,
+       35.64555305
       ],
       [
-       139.69529532,
-       35.64558781
+       139.69524526,
+       35.64560338
       ],
       [
-       139.69520268,
-       35.64558781
+       139.69518361,
+       35.64554695
       ],
       [
-       139.69520268,
-       35.64551219
+       139.69525274,
+       35.64549662
       ]
      ]
     ]
@@ -1804,8 +1860,10 @@
     "base_z_samples": 96,
     "base_z_radius_m": 250.0,
     "base_z_rough": true,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 0.0,
+    "orientation_source": "north",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -1867,8 +1925,10 @@
     "base_z_samples": 52,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 58.2,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -1880,24 +1940,24 @@
     "coordinates": [
      [
       [
-       139.709441,
-       35.63883998
+       139.70949131,
+       35.6388283
       ],
       [
-       139.709517,
-       35.63883998
+       139.70953131,
+       35.63888105
       ],
       [
-       139.709517,
-       35.63890202
+       139.70946669,
+       35.6389137
       ],
       [
-       139.709441,
-       35.63890202
+       139.70942669,
+       35.63886095
       ],
       [
-       139.709441,
-       35.63883998
+       139.70949131,
+       35.6388283
       ]
      ]
     ]
@@ -1930,8 +1990,10 @@
     "base_z_samples": 29,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 47.6,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -1943,24 +2005,24 @@
     "coordinates": [
      [
       [
-       139.70599561,
-       35.63675094
+       139.7061482,
+       35.63670263
       ],
       [
-       139.70628239,
-       35.63675094
+       139.70634158,
+       35.63687551
       ],
       [
-       139.70628239,
-       35.63698506
+       139.7061298,
+       35.63703337
       ],
       [
-       139.70599561,
-       35.63698506
+       139.70593642,
+       35.63686049
       ],
       [
-       139.70599561,
-       35.63675094
+       139.7061482,
+       35.63670263
       ]
      ]
     ]
@@ -1993,8 +2055,10 @@
     "base_z_samples": 43,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 40.6,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -2006,24 +2070,24 @@
     "coordinates": [
      [
       [
-       139.69383141,
-       35.64567131
+       139.69386495,
+       35.64565873
       ],
       [
-       139.69390659,
-       35.64567131
+       139.69392201,
+       35.6456987
       ],
       [
-       139.69390659,
-       35.64573269
+       139.69387305,
+       35.64574527
       ],
       [
-       139.69383141,
-       35.64573269
+       139.69381599,
+       35.6457053
       ],
       [
-       139.69383141,
-       35.64567131
+       139.69386495,
+       35.64565873
       ]
      ]
     ]
@@ -2056,8 +2120,10 @@
     "base_z_samples": 50,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 20.6,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": "address_chome",
@@ -2069,24 +2135,24 @@
     "coordinates": [
      [
       [
-       139.69881535,
-       35.63346055
+       139.69883391,
+       35.63345006
       ],
       [
-       139.69890465,
-       35.63346055
+       139.6989175,
+       35.6334757
       ],
       [
-       139.69890465,
-       35.63353345
+       139.69888609,
+       35.63354394
       ],
       [
-       139.69881535,
-       35.63353345
+       139.6988025,
+       35.6335183
       ],
       [
-       139.69881535,
-       35.63346055
+       139.69883391,
+       35.63345006
       ]
      ]
     ]
@@ -2119,8 +2185,10 @@
     "base_z_samples": 4,
     "base_z_radius_m": 120.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 0.0,
+    "orientation_source": "north",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": "lot_raw,address_raw,address_chome,construction_start,construction_end",
@@ -2182,8 +2250,10 @@
     "base_z_samples": 59,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 41.2,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": "zoning,address_block,height_m,max_height_m",
@@ -2195,24 +2265,24 @@
     "coordinates": [
      [
       [
-       139.69944157,
-       35.63832738
+       139.69957896,
+       35.63827656
       ],
       [
-       139.69974443,
-       35.63832738
+       139.69980669,
+       35.63843954
       ],
       [
-       139.69974443,
-       35.63857462
+       139.69960704,
+       35.63862544
       ],
       [
-       139.69944157,
-       35.63857462
+       139.69937931,
+       35.63846246
       ],
       [
-       139.69944157,
-       35.63832738
+       139.69957896,
+       35.63827656
       ]
      ]
     ]
@@ -2245,8 +2315,10 @@
     "base_z_samples": 48,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 61.3,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -2258,24 +2330,24 @@
     "coordinates": [
      [
       [
-       139.687956,
-       35.64541596
+       139.68806215,
+       35.64539379
       ],
       [
-       139.688108,
-       35.64541596
+       139.68813517,
+       35.64550261
       ],
       [
-       139.688108,
-       35.64554004
+       139.68800185,
+       35.64556221
       ],
       [
-       139.687956,
-       35.64554004
+       139.68792883,
+       35.64545339
       ],
       [
-       139.687956,
-       35.64541596
+       139.68806215,
+       35.64539379
       ]
      ]
     ]
@@ -2308,8 +2380,10 @@
     "base_z_samples": 38,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 55.7,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -2321,24 +2395,24 @@
     "coordinates": [
      [
       [
-       139.68868995,
-       35.63381059
+       139.68874932,
+       35.63379561
       ],
       [
-       139.68878405,
-       35.63381059
+       139.68880239,
+       35.63385905
       ],
       [
-       139.68878405,
-       35.63388741
+       139.68872468,
+       35.63390239
       ],
       [
-       139.68868995,
-       35.63388741
+       139.68867161,
+       35.63383895
       ],
       [
-       139.68868995,
-       35.63381059
+       139.68874932,
+       35.63379561
       ]
      ]
     ]
@@ -2371,8 +2445,10 @@
     "base_z_samples": 59,
     "base_z_radius_m": 60.0,
     "base_z_rough": false,
-    "footprint": "square_north",
+    "footprint": "square",
     "position": "block_representative_point",
+    "orientation_deg": 74.5,
+    "orientation_source": "plateau_building",
     "confirmed": false,
     "status_label": "確認前",
     "uncertain_fields": null,
@@ -2384,24 +2460,24 @@
     "coordinates": [
      [
       [
-       139.70069144,
-       35.63988773
+       139.70086029,
+       35.63986895
       ],
       [
-       139.70089056,
-       35.63988773
+       139.70091357,
+       35.64002556
       ],
       [
-       139.70089056,
-       35.64005027
+       139.70072171,
+       35.64006905
       ],
       [
-       139.70069144,
-       35.64005027
+       139.70066843,
+       35.63991244
       ],
       [
-       139.70069144,
-       35.63988773
+       139.70086029,
+       35.63986895
       ]
      ]
     ]

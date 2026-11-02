@@ -37,9 +37,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 import normalize
+import orient
 
 FILINGS_CSV = Path("data/meguro/filings_extracted.csv")
 BLDG_GEOJSON = Path("data/PLATEAU/bldg.geojson")
+# 道路（向きを道路の縁に合わせるのに使う。dev-policy §5）。
+TRAN_GEOJSON = Path("data/PLATEAU/tran.geojson")
 
 # 公開される場所に直接書き出す。`data/` に出してから手でコピーしない
 # （コピーは忘れるし、個人情報の確認を通らないものが混ざる）。
@@ -62,6 +65,7 @@ ALLOWED_PROPERTIES = {
     "construction_start", "construction_end", "sign_posted",
     "base_z_m", "base_z_samples", "base_z_radius_m", "base_z_rough",
     "footprint", "position",
+    "orientation_deg", "orientation_source",
     "confirmed", "status_label", "uncertain_fields",
     "source", "license",
 }
@@ -142,8 +146,32 @@ class GroundIndex:
         return lat_min <= lat <= lat_max and lon_min <= lon <= lon_max
 
 
+_bldg_data: dict | None = None
+
+
+def load_bldg_data() -> dict:
+    """bldg.geojson を一度だけ読む（地面Zと向きの両方で使うので使い回す）。"""
+    global _bldg_data
+    if _bldg_data is None:
+        _bldg_data = json.loads(BLDG_GEOJSON.read_text(encoding="utf-8"))
+    return _bldg_data
+
+
+_orient_index: "orient.OrientIndex | None" = None
+
+
+def load_orient_index() -> "orient.OrientIndex":
+    """向きを決める索引（建物の輪郭・向きと道路の線分）。一度だけ作る。"""
+    global _orient_index
+    if _orient_index is None:
+        tran = (json.loads(TRAN_GEOJSON.read_text(encoding="utf-8"))
+                if TRAN_GEOJSON.exists() else None)
+        _orient_index = orient.build_indices(load_bldg_data(), tran)
+    return _orient_index
+
+
 def load_ground_index() -> GroundIndex:
-    data = json.loads(BLDG_GEOJSON.read_text(encoding="utf-8"))
+    data = load_bldg_data()
     index: dict[tuple[int, int], list[tuple[float, float, float]]] = {}
     for feature in data["features"]:
         geometry = feature.get("geometry") or {}
@@ -233,7 +261,7 @@ def display_height(row: dict) -> tuple[float | None, str | None]:
     return None, None
 
 
-def build_feature(row: dict, points, index) -> tuple[dict | None, str | None]:
+def build_feature(row: dict, points, index, orient_index) -> tuple[dict | None, str | None]:
     """届出1件を Feature にする。作れなければ (None, 理由)。"""
     chome = normalize.chome(text(row, "address_chome"))
     block = normalize.block_number(text(row, "address_block"))
@@ -263,6 +291,9 @@ def build_feature(row: dict, points, index) -> tuple[dict | None, str | None]:
 
     confirmed = text(row, "verified") == "1"
     uncertain = text(row, "uncertain")
+
+    # 形は建築面積と同じ面積の正方形のまま、向きだけ周りに合わせる（dev-policy §5）。
+    oriented = orient.orient_site(orient_index, lat, lon, area)
 
     return {
         "type": "Feature",
@@ -296,8 +327,11 @@ def build_feature(row: dict, points, index) -> tuple[dict | None, str | None]:
             # 近くに建物がなく遠くから取った地面は当てにならない（目黒区は起伏がある）
             "base_z_rough": radius > GROUND_RADII_M[1],
             # 近似であることと、まだ確認前であることの印
-            "footprint": "square_north",
+            "footprint": "square",
             "position": "block_representative_point",
+            # 向き（北=0）と、どの方法で決めたか（§5）
+            "orientation_deg": oriented["orientation_deg"],
+            "orientation_source": oriented["orientation_source"],
             "confirmed": confirmed,
             "status_label": "確認済み" if confirmed else "確認前",
             "uncertain_fields": uncertain,
@@ -307,7 +341,7 @@ def build_feature(row: dict, points, index) -> tuple[dict | None, str | None]:
         },
         "geometry": {
             "type": "Polygon",
-            "coordinates": [square_footprint(lat, lon, area)],
+            "coordinates": [oriented["footprint"]],
         },
     }, None
 
@@ -376,13 +410,20 @@ def main():
     print(f"既存建物 {index.count}棟の底面を格子に入れた"
           f"（範囲 緯度 {lat_min:.4f}〜{lat_max:.4f} / 経度 {lon_min:.4f}〜{lon_max:.4f}）")
 
+    orient_index = load_orient_index()
+    print(f"向きの索引: 建物 {sum(len(v) for v in orient_index.building_cells.values())}棟 / "
+          f"道路の線分 {sum(len(v) for v in orient_index.road_cells.values())}本")
+
     features, skipped = [], []
+    by_source: dict[str, int] = {}
     for row in filings:
-        feature, reason = build_feature(row, points, index)
+        feature, reason = build_feature(row, points, index, orient_index)
         if feature is None:
             skipped.append((row.get("filing_no"), reason))
         else:
             features.append(feature)
+            src = feature["properties"]["orientation_source"]
+            by_source[src] = by_source.get(src, 0) + 1
 
     confirmed = sum(1 for f in features if f["properties"]["confirmed"])
     collection = {
@@ -394,7 +435,8 @@ def main():
             "confirmed": confirmed,
             "unconfirmed": len(features) - confirmed,
             "note": "届出の読み取り結果。目視確認が済んでいない行は「確認前」。"
-                    "位置は街区の代表点、形は建築面積と同じ面積の北向きの正方形で、"
+                    "位置は街区の代表点、形は建築面積と同じ面積の正方形で、"
+                    "向きは周りの街並み（既存建物・道路・近傍の多数派）に合わせた、"
                     "いずれも近似。",
             "sources": [
                 f"{SOURCE}（目黒区オープンデータ {LICENSE}） {SOURCE_URL}",
@@ -418,6 +460,7 @@ def main():
 
     print(f"\n{len(features)}棟を書き出しました → {OUT}")
     print(f"  確認済み {confirmed}件 / 確認前 {len(features) - confirmed}件")
+    print("  向きの決め方: " + " / ".join(f"{k} {v}" for k, v in sorted(by_source.items())))
     print(f"  公開前の確認: 確認前の印・出どころ・項目の許可リスト すべて通過")
     if skipped:
         print(f"\n作れなかった届出 {len(skipped)}件:")
