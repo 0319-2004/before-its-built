@@ -105,6 +105,13 @@ dev では出るのにビルドでは街並みが丸ごと消える、という�
 表示用の3D Tilesと計算用のGeoJSONは **`gml_id`** でつなぐ。
 実測と確認の手順は `docs/stage0.md`。
 
+**地面はGSI標高タイル（`dem_png`）を敷き、デコーダの `offset` にジオイド
+(+36.71m)を足して楕円体高にそろえる**（`main.ts`）。入れないと地図は楕円体に
+貼られ、建物が約46m浮く。落とし穴2つ：`offset` は**メートル**（epsilonで割らない。
+割ると3671m持ち上がりカメラが空を向く）。`overscaledMaxZoom` は z14 を使い回す
+上限で、低いと z15/z16 を取りに行って404を量産するので高く（22）する。遠景の
+粗いタイルは海で欠けるので `minZoom=10`。
+
 **`scripts/convert_plateau.sh`** — CityGML を GeoJSON に変換する。
 用途は**サーバー側の計算専用**（`data/PLATEAU/bldg.geojson` 14,334棟、`tran.geojson`）。
 同時に出る自前の3D Tiles は表示に使わない。公式配信が落ちたときの退避先も、

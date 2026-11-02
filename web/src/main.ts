@@ -39,7 +39,7 @@
  *
  * tileset の URL は src/tilesets.ts に集約してある。
  */
-import ThreeView from "@navaramap/three";
+import ThreeView, { JAPAN_GSI_ELEVATION_DECODER } from "@navaramap/three";
 import {
   DefaultPlugin,
   type DefaultDescriptions,
@@ -60,6 +60,13 @@ import {
 
 /** 中目黒駅 */
 const NAKAMEGURO = { lng: 139.6989, lat: 35.6441 };
+
+/**
+ * 目黒区のジオイド高（楕円体高 − 標高）。約36.71m（段階0の実測）。
+ * GSIの標高タイルは標高（T.P.）なので、これを足して楕円体高にそろえ、
+ * 楕円体高で描かれる公式3D Tilesや計画建物と地面の高さを合わせる。
+ */
+const GEOID_MEGURO_M = 36.71;
 
 const hud = document.getElementById("hud")!;
 
@@ -261,7 +268,40 @@ async function main() {
     roll: 0,
   });
 
-  // 地面がないと建物が宙に浮いて見えるので、背景に地図を敷く。
+  // 地形（DEM）。これを入れないと地図は楕円体（高さ0）に貼られ、公式3D Tilesや
+  // 計画建物（どちらも楕円体高）が地面から約46m浮く。GSIの標高タイルは標高なので、
+  // デコーダの offset に目黒のジオイド(+36.71m)を足して楕円体高にそろえ、地表を
+  // そこへ持ち上げる。地図（下の raster）とタイルはこの地形の上に乗る。
+  // 出典: 標高タイル（国土地理院）。CORS は access-control-allow-origin: *。
+  try {
+    const decoder = JAPAN_GSI_ELEVATION_DECODER();
+    // 標高[m] = decode(RGB) * epsilon + offset。**offset はメートル**なので、
+    // ジオイド[m]をそのまま足して標高→楕円体高にそろえる（epsilon で割らない。
+    // 一度 36.71/epsilon=3671 を足して地面を 3671m 持ち上げ、カメラが空を向いた）。
+    decoder.offset = (decoder.offset ?? 0) + GEOID_MEGURO_M;
+    const dem = view.addSource({
+      type: "raster-dem",
+      url: "https://cyberjapandata.gsi.go.jp/xyz/dem_png/{z}/{x}/{y}.png",
+      elevationDecoder: decoder,
+      // GSI の標高タイルは z5〜14（z15 以上はこの区域では 404）。
+      // maxZoom=14 で取得はz14まで。overscaledMaxZoom はその z14 タイルを
+      // **どのカメラズームまで使い回すか**で、14（＝maxZoom）にすると
+      // 近づいたとき z15/z16 を取りに行って 404 を量産する。高く（22）して
+      // z14 を拡大流用させ、深いズームでは取りに行かせない。
+      // 遠景の粗いタイル（z5〜9）は海や測量範囲外で欠けて 404 になるが、
+      // 近景は z11〜14 で足りるので minZoom=10 にして粗いタイルは要求しない。
+      minZoom: 10,
+      maxZoom: 14,
+      overscaledMaxZoom: 22,
+      tileSize: 256,
+    });
+    view.addLayer({ type: "terrain", source: dem });
+    log("地形（GSI標高タイル＋ジオイド補正）追加");
+  } catch (e) {
+    fail("terrain", e);
+  }
+
+  // 地図を地形の上に敷く（地形に沿ってドレープされる）。
   try {
     const raster = view.addSource({
       type: "raster-tile",
@@ -376,6 +416,10 @@ async function main() {
     {
       attribution: "© OpenStreetMap contributors",
       attributionUrl: "https://www.openstreetmap.org/copyright",
+    },
+    {
+      attribution: "標高タイル（国土地理院）",
+      attributionUrl: "https://maps.gsi.go.jp/development/ichiran.html",
     },
   ]);
 
