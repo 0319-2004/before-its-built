@@ -215,6 +215,37 @@ const CSS = `
   display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10.5px;
   border: 1px solid rgba(255,255,255,0.16); color: #a8b0bc; margin-left: 5px;
 }
+/* 3つの時点（PLATEAU 2021 / 現地・撮影日 / 計画・完了予定）の帯。
+   「数年遅れるPLATEAU → 看板で分かる未来」をひと目で見せる。 */
+#sample .timeline {
+  position: absolute; top: 12px; right: 14px;
+  display: flex; align-items: stretch; gap: 0; pointer-events: none;
+  max-width: calc(100% - 470px); flex-wrap: nowrap;
+}
+#sample .timeline .seg {
+  position: relative; min-width: 150px; max-width: 220px;
+  padding: 8px 14px; margin: 0 5px;
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 11px;
+  background: rgba(8,10,14,0.82); backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+  opacity: 0.5; transition: opacity .5s, border-color .5s, transform .5s;
+}
+#sample .timeline .seg.active { opacity: 1; transform: translateY(-2px); }
+#sample .timeline .seg.blue.active { border-color: rgba(45,125,255,0.7); }
+#sample .timeline .seg.orange.active { border-color: rgba(255,140,26,0.6); }
+#sample .timeline .when {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10.5px; letter-spacing: .02em; color: #aeb6c4;
+}
+#sample .timeline .when .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+#sample .timeline .when .dot.grey { background: #8a93a3; }
+#sample .timeline .when .dot.orange { background: #ff8c1a; }
+#sample .timeline .when .dot.blue { background: #2d7dff; }
+#sample .timeline .what { margin-top: 3px; font-size: 12px; color: #eef1f6; font-weight: 600; }
+#sample .timeline .arrow { align-self: center; color: #5c6782; font-size: 13px; padding: 0 1px; }
+@media (max-width: 860px) {
+  #sample .timeline { display: none; } /* 狭い画面ではパネルと干渉するので隠す */
+}
 @media (max-width: 560px) {
   #sample { justify-content: flex-end; }
   #sample .panel { width: auto; max-height: 68%; margin: 0 7px 7px; }
@@ -356,7 +387,73 @@ export async function runSampleMode(
   root.id = "sample";
   const panel = el("div", "panel");
   root.appendChild(panel);
+  // 3時点の帯（PLATEAU 2021 / 現地 / 計画）。件ごとに組み直す。
+  const timeline = el("div", "timeline");
+  root.appendChild(timeline);
   document.body.appendChild(root);
+
+  /** 読み取った値（なければ undefined）。根拠のない値は出さないための入口。 */
+  const val = (sample: Sample, field: string): unknown =>
+    sample.values[field]?.value;
+
+  /** 3時点の帯を組む。実データにある項目だけを出し、無い時点は控えめに書く。 */
+  function buildTimeline(sample: Sample) {
+    timeline.replaceChildren();
+    const v = sample.volume;
+    if (!v) {
+      timeline.style.display = "none";
+      return;
+    }
+    timeline.style.display = "";
+    const use = val(sample, "use");
+    const floors = val(sample, "floors_above");
+    const end = val(sample, "construction_end");
+    const posted = val(sample, "notice_posted");
+    const existing = v.existing;
+    const plannedWhat =
+      [use, v.display_height_m ? `${v.display_height_m.toFixed(1)}m` : null,
+       floors ? `地上${floors}階` : null].filter(Boolean).join("・") ||
+      "新しい建物";
+
+    const segs = [
+      {
+        tone: existing ? "orange" : "grey",
+        when: "PLATEAU（2021年調査）",
+        what:
+          existing && existing.height_m != null
+            ? `建物あり・約${Math.round(existing.height_m)}m`
+            : "建物なし（更地）",
+      },
+      {
+        tone: "orange",
+        when: posted ? `現地（看板 ${posted}）` : "現地",
+        what: "工事のお知らせ",
+      },
+      {
+        tone: "blue",
+        when: end ? `計画（${end} 完了予定）` : "計画",
+        what: plannedWhat,
+      },
+    ];
+    segs.forEach((s, i) => {
+      if (i) timeline.appendChild(el("div", "arrow", "→"));
+      const seg = el("div", `seg ${s.tone}`);
+      seg.dataset.phase = String(i);
+      const when = el("div", "when");
+      when.appendChild(el("span", `dot ${s.tone}`));
+      when.appendChild(el("span", undefined, s.when));
+      seg.appendChild(when);
+      seg.appendChild(el("div", "what", s.what));
+      timeline.appendChild(seg);
+    });
+  }
+
+  /** 帯の i 番目を強調する（3Dで今見えている時点に合わせる）。 */
+  function setTimelinePhase(i: number) {
+    for (const seg of timeline.querySelectorAll<HTMLElement>(".seg")) {
+      seg.classList.toggle("active", Number(seg.dataset.phase) === i);
+    }
+  }
 
   const head = el("div", "head");
   const title = el("h1");
@@ -470,9 +567,11 @@ export async function runSampleMode(
       }) as any;
 
     existingLayer = view.addLayer(describe(0, 0.95));
+    setTimelinePhase(0); // 帯: PLATEAU（2021年調査）を強調
     // NAVARA のベクタレイヤは追加から表示まで1〜2秒かかるので、沈める前に
     // しっかり見える時間を取る（短いと描画される前に沈んで見えないまま消える）。
     await sleep(EXISTING_HOLD_MS);
+    setTimelinePhase(1); // 帯: 現地（看板）を強調しながら沈める
     // 自分の高さ＋少し余分に沈めて地中へ。最後に速く沈む（easeInQuad）。
     await animate(SINK_MS, (t) => {
       const sink = (extrudeM + 1) * (t * t);
@@ -519,6 +618,8 @@ export async function runSampleMode(
     if (volume.existing && !prefersReducedMotion) {
       await demolishExisting(volume.existing, volume);
     }
+    // 計画（青）の時点へ。帯も計画を強調する。
+    setTimelinePhase(2);
     // 高さ0から立ち上げる。押し出しが0だと面が潰れるので、わずかに持ち上げる。
     buildingLayer = view.addLayer(describe(0.05));
     await animate(RISE_MS, (t) => {
@@ -535,6 +636,9 @@ export async function runSampleMode(
     diag.openedId = sample.id;
     clearBuilding();
     body.replaceChildren();
+    // 3時点の帯を組み直す。まだ PLATEAU（今は差分前）の時点を強調しておく。
+    buildTimeline(sample);
+    setTimelinePhase(0);
 
     for (const chip of chips.querySelectorAll(".chip")) {
       chip.setAttribute("aria-pressed", String(chip.getAttribute("data-id") === sample.id));
