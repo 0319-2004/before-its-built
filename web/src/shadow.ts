@@ -12,13 +12,25 @@
  * **これは法令上の日影規制の判定ではない。** 目安であることを画面に必ず出す（§10）。
  * 色は青（これから建つ）・オレンジ（注意）とは別の暗い半透明にする（§10 と混ぜない）。
  */
+import { Ray, Vector3 } from "three";
 import type ThreeView from "@navaramap/three";
 import type { Layer } from "@navaramap/three";
+import {
+  geodeticSurfaceNormal,
+  geodeticToVector3,
+  getPlaneFromPointNormal,
+  getRayPlaneIntersection,
+  vector3ToGeodetic,
+} from "@navaramap/three";
 
 /** 影の色。青/オレンジを避けた暗いスレート。半透明で地図を透かす。 */
 const SHADOW_FILL = 0x0d1320;
 const SHADOW_OUTLINE = 0x2a3550;
 const SHADOW_OPACITY = 0.34;
+
+/** 「あなたの家」のタップ地点のしるし。影の上でも目立つ明るい色。 */
+const MARKER_FILL = 0x00e5ff;
+const MARKER_OUTLINE = 0xffffff;
 
 /** 日影規制と同じく冬至で評価する。赤緯は固定でよい（冬至≈−23.44°）。 */
 const WINTER_SOLSTICE_DECL_DEG = -23.44;
@@ -149,6 +161,87 @@ export function shadowRing(
   return out.length >= 4 ? out : null;
 }
 
+/** 点がリング（多角形）の中か。緯度経度のまま（PNPOLY）。 */
+function pointInRing(lng: number, lat: number, ring: [number, number, number][]): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0];
+    const yi = ring[i][1];
+    const xj = ring[j][0];
+    const yj = ring[j][1];
+    if (yi > lat !== yj > lat && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+/** 冬至8–16時を10分刻みにした数。「あなたの家」の集計に使う。 */
+const SLAB_MIN = 10;
+const SLAB_H = SLAB_MIN / 60;
+const SLAB_COUNT = Math.round((SHADOW_HOUR_MAX - SHADOW_HOUR_MIN) / SLAB_H);
+
+export type ShadowHours = {
+  /** 日影に入っている時間帯（真太陽時の [開始, 終了]）。 */
+  intervals: [number, number][];
+  /** 合計の分。 */
+  totalMin: number;
+};
+
+/**
+ * ある地点（地上1.5m）が、冬至の8–16時に計画建物のどれかの影へ入る時間帯と合計。
+ * 10分の枠ごとに、枠の真ん中の時刻で影に入っているかを見る（10分刻み）。
+ */
+export function shadowHoursAt(
+  lng: number,
+  lat: number,
+  volumes: ShadowVolume[],
+  latDeg: number,
+): ShadowHours {
+  const shaded: boolean[] = [];
+  for (let k = 0; k < SLAB_COUNT; k++) {
+    const mid = SHADOW_HOUR_MIN + (k + 0.5) * SLAB_H;
+    let inShadow = false;
+    for (const v of volumes) {
+      const ring = shadowRing(v, mid, latDeg);
+      if (ring && pointInRing(lng, lat, ring)) {
+        inShadow = true;
+        break;
+      }
+    }
+    shaded.push(inShadow);
+  }
+  const intervals: [number, number][] = [];
+  let start = -1;
+  for (let k = 0; k < SLAB_COUNT; k++) {
+    if (shaded[k] && start < 0) start = SHADOW_HOUR_MIN + k * SLAB_H;
+    if (!shaded[k] && start >= 0) {
+      intervals.push([start, SHADOW_HOUR_MIN + k * SLAB_H]);
+      start = -1;
+    }
+  }
+  if (start >= 0) intervals.push([start, SHADOW_HOUR_MAX]);
+  return { intervals, totalMin: shaded.filter(Boolean).length * SLAB_MIN };
+}
+
+/** 時刻（真太陽時の小数）を H:MM に。 */
+function hhmm(h: number): string {
+  const hh = Math.floor(h);
+  const mm = Math.round((h - hh) * 60);
+  return `${hh}:${String(mm).padStart(2, "0")}`;
+}
+
+/** タップ地点に置く小さな丸（12角形）。地上に薄く浮かせる。 */
+function markerRing(lng: number, lat: number, z: number, radiusM = 2.5): [number, number, number][] {
+  const m = metersPerDegree(lat);
+  const out: [number, number, number][] = [];
+  for (let i = 0; i <= 12; i++) {
+    const a = (i / 12) * 2 * Math.PI;
+    out.push([lng + (Math.cos(a) * radiusM) / m.lng, lat + (Math.sin(a) * radiusM) / m.lat, z]);
+  }
+  return out;
+}
+
 /** 代表点（緯度・経度の平均）。太陽位置の緯度に使う。 */
 function meanLatLng(volumes: ShadowVolume[]): { lat: number; lng: number } {
   let lat = 0;
@@ -189,6 +282,13 @@ const CSS = `
 #shadow-study .ticks { display: flex; justify-content: space-between; font-size: 10px; color: #78808d; }
 #shadow-study .note { margin: 8px 0 0; font-size: 10.5px; color: #8e97a4; }
 #shadow-study .note b { color: #ffb366; font-weight: 600; }
+#shadow-study .tap {
+  margin: 9px 0 0; padding: 8px 10px; border-radius: 9px;
+  border: 1px solid rgba(0,229,255,0.35); background: rgba(0,229,255,0.08);
+  font-size: 11.5px; color: #cfeaf2;
+}
+#shadow-study .tap b { color: #7fe9ff; font-weight: 600; }
+#shadow-study .tap .big { font-size: 15px; color: #e8fbff; }
 `;
 
 export type ShadowStudy = {
@@ -291,6 +391,12 @@ export function addShadowStudy(
   ticks.innerHTML = "<span>8時</span><span>10時</span><span>12時</span><span>14時</span><span>16時</span>";
   panel.appendChild(ticks);
 
+  // 「あなたの家」：地図をタップすると、その地点が日影に入る時間が出る。
+  const tap = document.createElement("div");
+  tap.className = "tap";
+  tap.textContent = "地図をタップすると、その地点（地上1.5m）が冬至に日影へ入る時間が出ます。";
+  panel.appendChild(tap);
+
   const note = document.createElement("p");
   note.className = "note";
   note.innerHTML =
@@ -325,14 +431,98 @@ export function addShadowStudy(
   };
   slider.addEventListener("input", () => setHour(Number(slider.value)));
 
+  // --- 「あなたの家」：タップ地点の日影時間 ---
+  // タップ点の緯度経度は、楕円体ではなく**地面の高さの水平面**に当てて出す
+  // （斜め視点だと楕円体に当てると地面と100m以上ずれるため）。
+  const groundZ =
+    volumes.reduce((s, v) => s + v.base_z_m, 0) / Math.max(1, volumes.length);
+  const groundPlane = getPlaneFromPointNormal(
+    geodeticToVector3({ lng: site.lng, lat: site.lat, height: groundZ }),
+    geodeticSurfaceNormal({ lng: site.lng, lat: site.lat, height: groundZ }),
+  );
+
+  let markerLayer: Layer | null = null;
+  const placeMarker = (lng2: number, lat2: number) => {
+    const source = view.addSource({
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "Polygon",
+              coordinates: [markerRing(lng2, lat2, groundZ + 0.3)],
+            },
+          },
+        ],
+      },
+    });
+    const next = view.addLayer({
+      type: "vector",
+      source,
+      polygon: {
+        color: MARKER_FILL,
+        perPositionHeight: true,
+        clampToGround: false,
+        outlineShow: true,
+        outlineColor: MARKER_OUTLINE,
+        opacity: 0.85,
+        emissiveColor: MARKER_FILL,
+        emissiveIntensity: 0.5,
+      },
+    } as any);
+    markerLayer?.delete();
+    markerLayer = next;
+  };
+
+  const showHours = (lng2: number, lat2: number) => {
+    const { intervals, totalMin } = shadowHoursAt(lng2, lat2, volumes, site.lat);
+    (window as any).__shadowTap = { lng: lng2, lat: lat2, intervals, totalMin };
+    if (totalMin === 0) {
+      tap.innerHTML =
+        "<b>この地点</b>は、冬至の8–16時に計画建物の日影へ<b>入りません</b>。";
+      return;
+    }
+    const hm = Math.floor(totalMin / 60);
+    const mm = totalMin % 60;
+    const total = hm ? `${hm}時間${mm ? mm + "分" : ""}` : `${mm}分`;
+    const ranges = intervals.map(([a, b]) => `${hhmm(a)}–${hhmm(b)}`).join("、");
+    tap.innerHTML =
+      `<b>この地点</b>が冬至に日影へ入るのは合計 <span class="big">${total}</span><br>` +
+      `時間帯：${ranges}`;
+  };
+
+  const onClick = (event: any) => {
+    const m = event?.map;
+    if (!m) return;
+    // パネル（チップ・スライダー・HUD）を触ったクリックでは地図に印を置かない
+    const target = event.target as Element | null;
+    if (target?.closest?.("#sample, #shadow-study, #hud, #credit")) return;
+    // カメラ → タップ点（楕円体上）の向きのレイを、地面高の水平面に当て直す
+    const cam = view.camera.positionGeographic as { lng: number; lat: number; height?: number };
+    const camPos = geodeticToVector3({ lng: cam.lng, lat: cam.lat, height: cam.height ?? 1000 });
+    const hit = new Vector3(m.x, m.y, m.z);
+    const ray = new Ray(camPos, hit.clone().sub(camPos).normalize());
+    const onGround = getRayPlaneIntersection(ray, groundPlane) ?? hit;
+    const geo = vector3ToGeodetic(onGround);
+    placeMarker(geo.lng, geo.lat);
+    showHours(geo.lng, geo.lat);
+  };
+  view.on("click", onClick);
+
   // 初期描画
   apply();
 
   return {
     setHour,
     destroy: () => {
+      view.off("click", onClick);
       layer?.delete();
       layer = null;
+      markerLayer?.delete();
+      markerLayer = null;
       root.remove();
       style.remove();
     },

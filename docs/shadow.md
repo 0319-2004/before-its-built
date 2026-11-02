@@ -67,12 +67,38 @@ sin(高度) = sinφ·sinδ + cosφ·cosδ·cosH
 冬至らしい。ビルド（`npm run build && npm run preview`）でも stage1・サンプルとも
 同じに描け、console.error は favicon の1件だけ。
 
+## 「あなたの家」の日影時間（タップ）
+
+地図をタップすると、その地点（地上1.5m）が冬至の8–16時に計画建物のどれかの影へ
+入る**時間帯と合計**を出す（10分刻み）。マーカー（シアンの丸）を置き、下のパネルに
+「合計 N時間M分／時間帯 10:10–12:40, …」を出す。影に入らなければその旨を出す。
+段階1/2 とサンプルモードの両方で使える（日影と同じ `addShadowStudy` に載っている）。
+断り（法令の判定ではない目安）はここでも常時出る。
+
+**タップ点の緯度経度は、楕円体ではなく地面の高さの水平面に当てて出す。**
+NAVARA の `click` イベントの `map` は楕円体面（標高0）のECEFで、目黒区の地面は
+楕円体高で約46〜67mあるため、斜め視点だと楕円体に当てた点は地面と大きくずれる
+（pitch −22°で約138m）。そこでカメラ位置からタップ点へのレイを、代表点の地面高に
+置いた水平面（`getPlaneFromPointNormal` / `getRayPlaneIntersection`）に当て直し、
+`vector3ToGeodetic` で緯度経度にする。すべて NAVARA の同じECEF内で完結する。
+
+撮って確かめた（真上と斜めで同じ建物をクリック）:
+
+| 視点 | クリック位置 | 出た緯度経度の建物中心からの距離 |
+|---|---|---|
+| 真上（pitch −90） | 建物中心 | 0.0m |
+| 斜め（pitch −22） | 建物中心 | **0.7m**（楕円体のままなら約138mずれる） |
+
+日影時間も符号が合っている：建物の真南の点は0分（冬至の影は北へ出る）、
+建物の北16mの点は7時間（8:30–15:30。朝夕の低い太陽では影が北西・北東へ逃げて外れる）。
+
 ## 公開インターフェース（`web/src/shadow.ts`）
 
 - `sunAltAz(hours, latDeg)` → `{altDeg, azDeg}`（冬至固定）
 - `shadowRing(volume, hours, latDeg)` → 影リング `[lng,lat,z][]` または null
-- `addShadowStudy(view, volumes, {lng, initialHour})` → 影レイヤ＋スライダーを作り、
-  `atmosphere.date` を冬至に固定、スライダーで `setSolarTime` と再描画を回す。
+- `shadowHoursAt(lng, lat, volumes, latDeg)` → `{intervals, totalMin}`（「あなたの家」）
+- `addShadowStudy(view, volumes, {lng, initialHour})` → 影レイヤ＋スライダー＋タップを作り、
+  `atmosphere.date` を冬至に固定、スライダーで `setSolarTime` と再描画、タップで日影時間を出す。
   戻り値 `{setHour, destroy}`。`volumes` は `{footprint, base_z_m, display_height_m}[]`。
 
 段階1/2 は `main.ts` が `addStage1` の返す `volumes`（描いた棟の実寸）を渡す。
