@@ -19,6 +19,8 @@ import { addShadowStudy, type ShadowStudy } from "./shadow";
 /** 青＝これから建つもの。オレンジ＝消えるもの・注意。dev-policy §10。 */
 const BLUE = 0x2d7dff;
 const BLUE_LIGHT = 0x9ecbff;
+const ORANGE = 0xff8c1a;
+const ORANGE_LIGHT = 0xffc078;
 
 export const SAMPLES_URL = `${import.meta.env.BASE_URL}samples.json`;
 
@@ -26,6 +28,11 @@ export const SAMPLES_URL = `${import.meta.env.BASE_URL}samples.json`;
 const STEP_DELAY_MS = 620;
 /** 建物が立ち上がる時間[ms]。 */
 const RISE_MS = 1400;
+/** 置き換わるアニメ: 既存建物をオレンジで見せてから沈むまで[ms]。
+ *  ホールドは NAVARA のベクタレイヤが表示されるまでの待ち（約2秒）を見込んで
+ *  長めに取る（短いと描画される前に沈んで、オレンジが見えないまま消える）。 */
+const EXISTING_HOLD_MS = 3500;
+const SINK_MS = 1500;
 
 type Step = {
   n: number;
@@ -38,6 +45,16 @@ type Step = {
   failed: boolean;
 };
 
+/** 置き換わる前の PLATEAU（2021年調査）の建物。orient.py が付ける。 */
+type Existing = {
+  gml_id: string | null;
+  footprint: [number, number][];
+  base_z_m: number | null;
+  height_m: number | null;
+  match: string;
+  distance_m: number;
+};
+
 type Volume = {
   footprint: [number, number][];
   building_area_m2: number;
@@ -45,6 +62,10 @@ type Volume = {
   display_height_source: string;
   base_z_m: number;
   base_z_rough: boolean;
+  orientation_deg?: number;
+  orientation_source?: string;
+  /** 置き換わる既存建物（なければ null）。 */
+  existing?: Existing | null;
 };
 
 type Sample = {
@@ -223,6 +244,63 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+/** 画面がゆっくり回る速さ[度/秒]。1周 ≒ 60秒。スマホでも重くない程度に遅く。 */
+const ORBIT_DEG_PER_SEC = 6;
+
+type Orbit = { stop: () => void };
+
+/**
+ * 対象の敷地に寄ったまま、建物を中心にゆっくり旋回する（コンセプトの「差分」を
+ * 回り込んで見せる）。**画面（地図）を触ったら止めて**操作をユーザーに返す。
+ * パネルのスクロールや切り替えでは止めない（地図の canvas だけを見る）。
+ */
+function startOrbit(
+  view: ThreeView<any>,
+  center: { lng: number; lat: number; height: number },
+  start: { distance: number; pitch: number; heading: number },
+): Orbit {
+  // 地図の canvas（パネル操作では止めたくないので window ではなく app を見る）。
+  const canvas = document.getElementById("app");
+  let stopped = false;
+  let raf = 0;
+  let heading = start.heading;
+  let last = performance.now();
+
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+    cancelAnimationFrame(raf);
+    canvas?.removeEventListener("pointerdown", stop);
+    canvas?.removeEventListener("wheel", stop);
+    canvas?.removeEventListener("touchstart", stop);
+  };
+
+  const tick = (now: number) => {
+    if (stopped) return;
+    // dt は大きなコマ落ち（タブ復帰など）で飛ばないよう上限を付ける。
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    heading = (heading + ORBIT_DEG_PER_SEC * dt) % 360;
+    view.setCamera({
+      lng: center.lng,
+      lat: center.lat,
+      height: center.height,
+      distance: start.distance,
+      pitch: start.pitch,
+      heading,
+    });
+    raf = requestAnimationFrame(tick);
+  };
+  raf = requestAnimationFrame(tick);
+
+  // 画面を触ったら止めて操作をユーザーに返す。
+  canvas?.addEventListener("pointerdown", stop);
+  canvas?.addEventListener("wheel", stop, { passive: true });
+  canvas?.addEventListener("touchstart", stop, { passive: true });
+
+  return { stop };
+}
+
 /** 値を単位付きで出す。 */
 function formatValue(field: string, value: unknown): string {
   return `${value}${FIELD_UNITS[field] ?? ""}`;
@@ -300,30 +378,113 @@ export async function runSampleMode(
 
   // --- 3D 側 ---
   let buildingLayer: Layer | null = null;
+  let existingLayer: Layer | null = null;
   let shadowStudy: ShadowStudy | null = null;
+  let orbit: Orbit | null = null;
+  const prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+  // アニメの世代。件を切り替えたら増やし、進行中の rAF に「もう別の件」と知らせる
+  // （古いアニメが新しいレイヤを動かしてしまうのを防ぐ）。
+  let animGen = 0;
   const clearBuilding = () => {
+    animGen++;
     buildingLayer?.delete();
     buildingLayer = null;
+    // 置き換わるアニメの既存建物（オレンジ）も片付ける。
+    existingLayer?.delete();
+    existingLayer = null;
+    // 旋回も止める（件を切り替えたら前の旋回は残さない）。
+    orbit?.stop();
+    orbit = null;
     // 日影のスライダーとレイヤも片付ける（件を切り替えたら前の影は残さない）。
     shadowStudy?.destroy();
     shadowStudy = null;
   };
 
-  /** 建物を 0 から本来の高さまで立ち上げる。 */
-  async function raise(volume: Volume) {
-    const source = view.addSource({
+  /** 1フレームずつ t:0→1 を進めるアニメ。世代が変わったら途中でやめる。 */
+  function animate(durationMs: number, onFrame: (t: number) => void): Promise<void> {
+    const gen = animGen;
+    const started = performance.now();
+    return new Promise<void>((done) => {
+      const tick = () => {
+        if (gen !== animGen) return done(); // 別の件に切り替わった
+        const t = Math.min(1, (performance.now() - started) / durationMs);
+        onFrame(t);
+        if (t < 1) requestAnimationFrame(tick);
+        else done();
+      };
+      requestAnimationFrame(tick);
+    });
+  }
+
+  function geojsonSource(footprint: [number, number][]) {
+    return view.addSource({
       type: "geojson",
       data: {
         type: "FeatureCollection",
-        features: [
-          {
-            type: "Feature",
-            properties: {},
-            geometry: { type: "Polygon", coordinates: [volume.footprint] },
-          },
-        ],
+        features: [{
+          type: "Feature",
+          properties: {},
+          geometry: { type: "Polygon", coordinates: [footprint] },
+        }],
       },
     });
+  }
+
+  /**
+   * 置き換わるアニメの前半: 敷地の PLATEAU（2021年調査）の建物をオレンジで見せ、
+   * **地面に沈めながら薄くして消す**（解体。dev-policy §10、UIの決定どおり）。
+   * PLATEAU の 3D Tiles 側の建物は消せないので、沈む途中で下から少し見えるが、
+   * それは「PLATEAUのまま」の姿で、これ自体が「数年遅れる」課題の実例（§15）。
+   */
+  async function demolishExisting(existing: Existing, volume: Volume): Promise<void> {
+    if (existing.height_m == null) return;
+    // 既存建物（PLATEAU 2021）を敷地に**オレンジの箱**で表し、沈めて消す。
+    // 位置・形は計画建物と同じ正方形（敷地の代表点）に置く。PLATEAU の実輪郭の
+    // 場所は周りの背の高い建物に隠れて見えないことが多く、同じ敷地に重ねるほうが
+    // 「古い建物が沈んで新しい建物が建つ」という置き換わりがはっきり見えるため。
+    // 高さは既存建物の実際の高さ（短い）。新しい青はこの上に、本来の高さで建つ。
+    const baseZ = volume.base_z_m;
+    const extrudeM = Math.max(existing.height_m, 5);
+    const source = geojsonSource(volume.footprint);
+    // height = 底面の楕円体高。下げると箱ごと地中に沈む。
+    const describe = (sinkM: number, opacity: number) =>
+      ({
+        type: "vector",
+        source,
+        polygon: {
+          color: ORANGE,
+          height: baseZ - sinkM,
+          extrudedHeight: extrudeM,
+          perPositionHeight: false,
+          clampToGround: false,
+          castShadow: true,
+          receiveShadow: true,
+          outlineShow: true,
+          outlineColor: ORANGE_LIGHT,
+          opacity,
+          emissiveColor: ORANGE,
+          emissiveIntensity: 0.25,
+        },
+      }) as any;
+
+    existingLayer = view.addLayer(describe(0, 0.95));
+    // NAVARA のベクタレイヤは追加から表示まで1〜2秒かかるので、沈める前に
+    // しっかり見える時間を取る（短いと描画される前に沈んで見えないまま消える）。
+    await sleep(EXISTING_HOLD_MS);
+    // 自分の高さ＋少し余分に沈めて地中へ。最後に速く沈む（easeInQuad）。
+    await animate(SINK_MS, (t) => {
+      const sink = (extrudeM + 1) * (t * t);
+      existingLayer?.update(describe(sink, Math.max(0, 0.95 * (1 - t))));
+    });
+    existingLayer?.delete();
+    existingLayer = null;
+  }
+
+  /** 建物を 0 から本来の高さまで立ち上げる（必要なら先に既存建物を解体する）。 */
+  async function raise(volume: Volume) {
+    const source = geojsonSource(volume.footprint);
     // `extrudedHeight` は**底面からの相対の押し出し量**（NAVARA の仕様。
     // 「Extrusion height for polygons in meters」。絶対の天面高ではない）。
     // `height` が底面の楕円体高で、そこから `extrudedHeight` m 立ち上がる。
@@ -354,19 +515,16 @@ export async function runSampleMode(
       buildingLayer = view.addLayer(describe(hM));
       return;
     }
+    // 置き換わるアニメ: 既存建物（PLATEAU 2021）をオレンジで沈めてから青を立てる。
+    if (volume.existing && !prefersReducedMotion) {
+      await demolishExisting(volume.existing, volume);
+    }
     // 高さ0から立ち上げる。押し出しが0だと面が潰れるので、わずかに持ち上げる。
     buildingLayer = view.addLayer(describe(0.05));
-    const started = performance.now();
-    await new Promise<void>((done) => {
-      const tick = () => {
-        const t = Math.min(1, (performance.now() - started) / RISE_MS);
-        // 立ち上がりは最後にゆるめる（easeOutCubic）
-        const eased = 1 - Math.pow(1 - t, 3);
-        buildingLayer?.update(describe(Math.max(0.05, hM * eased)));
-        if (t < 1) requestAnimationFrame(tick);
-        else done();
-      };
-      requestAnimationFrame(tick);
+    await animate(RISE_MS, (t) => {
+      // 立ち上がりは最後にゆるめる（easeOutCubic）
+      const eased = 1 - Math.pow(1 - t, 3);
+      buildingLayer?.update(describe(Math.max(0.05, hM * eased)));
     });
   }
 
@@ -386,22 +544,36 @@ export async function runSampleMode(
       el("div", "hint", `${sample.label} — エージェントが${sample.steps.length}手で判断しました`),
     );
 
-    // 建物があるなら、立ち上がるところが見えるように先に寄っておく。
+    // 建物があるなら、立ち上がるところが見えるように先に寄っておき、
+    // エージェントが処理している間、敷地を中心にゆっくり旋回する（コンセプトの
+    // 「差分」を回り込んで見せる。画面を触れば止まる）。
     // `freecam` のときは URL のカメラ（main.ts の setCamera）をそのまま使う。
     // 段階1と同じ視点で撮り比べて縦横比を測るための計測用の抜け道。
     if (sample.volume && !options.freecam) {
       const center = centroid(sample.volume.footprint);
-      void view.flyTo(
+      const orbitStart = { distance: 260, pitch: -22, heading: 25 };
+      const flight = view.flyTo(
         {
           lng: center.lng,
           lat: center.lat,
           height: sample.volume.base_z_m,
-          distance: 260,
-          pitch: -22,
-          heading: 25,
+          ...orbitStart,
         },
         { duration: options.fast ? 0.1 : 1.6 },
       );
+      // 寄り終えてから旋回を始める（飛行中に setCamera を呼ぶと飛行が切れるため）。
+      // fast / reduced-motion のときは回さない（計測用・動きを嫌う設定）。
+      if (!options.fast && !prefersReducedMotion) {
+        void flight.then((arrived) => {
+          if (arrived && token === running && sample.volume) {
+            orbit = startOrbit(
+              view,
+              { lng: center.lng, lat: center.lat, height: sample.volume.base_z_m },
+              orbitStart,
+            );
+          }
+        });
+      }
     }
 
     for (const step of sample.steps) {
@@ -486,13 +658,24 @@ export async function runSampleMode(
       );
     }
     if (sample.volume) {
+      const orientWord =
+        sample.volume.orientation_source === "plateau_building"
+          ? "既存建物に合わせた"
+          : sample.volume.orientation_source === "nearest_road"
+            ? "最寄りの道路に合わせた"
+            : sample.volume.orientation_source === "neighbor_majority"
+              ? "周りの建物に合わせた"
+              : "北向きの";
       notes.appendChild(
         el(
           "p",
           undefined,
-          `形は建築面積 ${sample.volume.building_area_m2}㎡ と同じ面積の北向きの正方形、` +
+          `形は建築面積 ${sample.volume.building_area_m2}㎡ と同じ面積の正方形で向きは${orientWord}もの、` +
             `位置は街区の代表点で、いずれも近似です。` +
-            `高さは${sample.volume.display_height_source === "max_height_m" ? "最高の高さ" : "高さ"}を使っています。`,
+            `高さは${sample.volume.display_height_source === "max_height_m" ? "最高の高さ" : "高さ"}を使っています。` +
+            (sample.volume.existing
+              ? `オレンジは PLATEAU（2021年調査）の建物で、沈めて青い計画建物に置き換えています。`
+              : ""),
         ),
       );
     }

@@ -37,7 +37,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 import evaluate
+import make_planned_geojson
 import normalize
+import orient
 from agent import OUTCOMES
 
 RECORD_DIR = Path("data/agent")
@@ -225,6 +227,31 @@ def step_detail(step: dict) -> str:
     return ""
 
 
+def augment_volume(volume: dict | None) -> dict | None:
+    """ボリュームに「向き」と「置き換わる既存建物」を足す（dev-policy §5, §10）。
+
+    エージェントの記録は北向きの正方形なので、ここで周りの街並みに合わせて向きを
+    決め直し（`orient`）、置き換わるアニメ用に敷地のPLATEAU既存建物（輪郭・高さ）も
+    付ける。モデルは呼ばない（記録の footprint の中心と建築面積から幾何計算するだけ）。
+    """
+    if not volume or not volume.get("footprint"):
+        return volume
+    ring = volume["footprint"]
+    lon = sum(p[0] for p in ring[:4]) / 4
+    lat = sum(p[1] for p in ring[:4]) / 4
+    area = volume.get("building_area_m2")
+    if not area:
+        return volume
+    o = orient.orient_site(make_planned_geojson.load_orient_index(), lat, lon, area)
+    volume = dict(volume)
+    volume["footprint"] = o["footprint"]
+    volume["orientation_deg"] = o["orientation_deg"]
+    volume["orientation_source"] = o["orientation_source"]
+    # 既存建物（なければ None）。置き換わるアニメで「オレンジになって沈む」もの。
+    volume["existing"] = o["existing"]
+    return volume
+
+
 def build_sample(record: dict, names: set[str]) -> dict:
     reading = record.get("reading")
     values = published_values(reading)
@@ -261,7 +288,7 @@ def build_sample(record: dict, names: set[str]) -> dict:
         "status_label": None,
         "values": values,
         "steps": steps,
-        "volume": record.get("volume"),
+        "volume": augment_volume(record.get("volume")),
         "boards_found": record.get("boards_found"),
         # 看板の写真は出さない。なぜ出さないかも画面に書く
         "photo_published": False,
@@ -347,7 +374,8 @@ def main():
         "note": "撮った看板の写真をエージェントに通した結果を、そのまま保存したもの。"
                 "画面を開いたときにモデルは呼ばれない。"
                 "届出は目視確認が済んでいないので「確認前」の印が付く。"
-                "位置は街区の代表点、形は建築面積と同じ面積の北向きの正方形で、いずれも近似。",
+                "位置は街区の代表点、形は建築面積と同じ面積の正方形で、"
+                "向きは周りの街並みに合わせた、いずれも近似。",
         "outcomes": OUTCOMES,
         "sources": [
             f"{SOURCE}（目黒区オープンデータ {LICENSE}） {SOURCE_URL}",
