@@ -14,6 +14,7 @@
  */
 import type ThreeView from "@navaramap/three";
 import type { Layer } from "@navaramap/three";
+import { addShadowStudy, type ShadowStudy } from "./shadow";
 
 /** 青＝これから建つもの。オレンジ＝消えるもの・注意。dev-policy §10。 */
 const BLUE = 0x2d7dff;
@@ -245,6 +246,8 @@ export async function runSampleMode(
     id?: string | null;
     fast?: boolean;
     freecam?: boolean;
+    /** 立ち上がった建物に日影（冬至・地上1.5m）を付ける。dev-policy §10。 */
+    shadow?: boolean;
   } = {},
 ): Promise<SampleDiag> {
   const url = options.url ?? SAMPLES_URL;
@@ -297,9 +300,13 @@ export async function runSampleMode(
 
   // --- 3D 側 ---
   let buildingLayer: Layer | null = null;
+  let shadowStudy: ShadowStudy | null = null;
   const clearBuilding = () => {
     buildingLayer?.delete();
     buildingLayer = null;
+    // 日影のスライダーとレイヤも片付ける（件を切り替えたら前の影は残さない）。
+    shadowStudy?.destroy();
+    shadowStudy = null;
   };
 
   /** 建物を 0 から本来の高さまで立ち上げる。 */
@@ -495,7 +502,13 @@ export async function runSampleMode(
 
     if (sample.volume) {
       await raise(sample.volume);
-      if (token === running) diag.builtId = sample.id;
+      if (token === running) {
+        diag.builtId = sample.id;
+        // 日影（冬至・地上1.5m・直方体近似の目安）。dev-policy §10。
+        if (options.shadow) {
+          shadowStudy = addShadowStudy(view, [sample.volume], { initialHour: 10 });
+        }
+      }
     }
   }
 

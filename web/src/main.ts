@@ -24,9 +24,14 @@
  * 段階2（計画建物＝青＋解体建物＝オレンジ）:
  *   http://localhost:5173/?stage=2&time=10
  *
+ * 日影（冬至・地上1.5m・直方体近似の目安。時刻スライダー8–16時）:
+ *   http://localhost:5173/?stage=1&shadow=1
+ *   http://localhost:5173/?stage=2&shadow=1&time=14
+ *
  * サンプルモード（審査員向け。判断の記録を1手ずつ流して3Dで立ち上げる）:
  *   http://localhost:5173/?mode=sample
  *   http://localhost:5173/?mode=sample&id=IMG_3936
+ *   http://localhost:5173/?mode=sample&shadow=1   立てた建物に日影を付ける
  *
  * 太陽の位置は既定で今の時刻。**夜に開くと建物が真っ黒になる**ので、
  * 見た目を確かめるときは現地の視太陽時を渡す:
@@ -41,6 +46,7 @@ import {
 } from "@navaramap/three-default-plugin";
 
 import { runSampleMode } from "./sample";
+import { addShadowStudy, SHADOW_HOUR_MAX, SHADOW_HOUR_MIN } from "./shadow";
 import { addStage0 } from "./stage0";
 import { addStage1 } from "./stage1";
 import { addStage2 } from "./stage2";
@@ -204,6 +210,15 @@ async function main() {
         );
       }
       log("  ※ 届出は目視確認前。位置は街区の代表点、形は近似");
+
+      // 日影（冬至・地上1.5m）。?shadow=1 で、描いた棟の実寸から影を計算する。
+      if (params.get("shadow") === "1" && s1.volumes.length) {
+        const initialHour = params.has("time")
+          ? Math.max(SHADOW_HOUR_MIN, Math.min(SHADOW_HOUR_MAX, Number(params.get("time"))))
+          : 10;
+        addShadowStudy(view, s1.volumes, { lng: NAKAMEGURO.lng, initialHour });
+        log(`日影: ${s1.volumes.length}棟（冬至・地上1.5m・直方体近似の目安）`);
+      }
     } catch (e) {
       fail("stage1", e);
     }
@@ -236,6 +251,8 @@ async function main() {
         // 計測用: URL のカメラ（?lng/lat/height/pitch/heading）をそのまま使い、
         // open() の flyTo を止める。段階1と同じ視点で撮り比べるため。
         freecam: params.get("freecam") === "1",
+        // 日影（冬至・地上1.5m・直方体近似の目安）。dev-policy §10。
+        shadow: params.get("shadow") === "1",
       });
       diag.sample = s;
       log(`サンプルモード: ${s.count}件（3Dを立てた件 ${s.builtId ?? "なし"}）`);

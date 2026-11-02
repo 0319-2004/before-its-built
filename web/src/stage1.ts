@@ -86,6 +86,12 @@ export type Stage1Diag = {
   centeredOn: number | null;
   generated: string | null;
   note: string | null;
+  /** 実際に描いた棟の実寸（日影の計算にそのまま渡す）。 */
+  volumes: {
+    footprint: [number, number][];
+    base_z_m: number;
+    display_height_m: number;
+  }[];
 };
 
 export type Stage1Options = {
@@ -142,6 +148,7 @@ export async function addStage1(
     centeredOn: null,
     generated: data.metadata?.generated ?? null,
     note: data.metadata?.note ?? null,
+    volumes: [],
   };
 
   // 中心が指定されていれば、その周りだけに絞る
@@ -202,6 +209,11 @@ export async function addStage1(
     if (p.base_z_rough) diag.roughBase += 1;
     baseZs.push(p.base_z_m);
     heights.push(p.display_height_m);
+    diag.volumes.push({
+      footprint: feature.geometry.coordinates[0],
+      base_z_m: p.base_z_m,
+      display_height_m: p.display_height_m,
+    });
   }
 
   if (baseZs.length) {
