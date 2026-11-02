@@ -1,11 +1,19 @@
-"""看板の読み取り結果を、目黒区の届出（正解データ）と突き合わせて精度を数える。
+"""エージェント（`agent.py`）の出力を、目黒区の届出（正解データ）と突き合わせて数える。
 
-先に `python pipeline/process.py <写真>` で読み取りを済ませておく。
+先に `python pipeline/agent.py --all data/photos/<日付>` を回し、
+判断の記録 `data/agent/<写真>.json` を作っておく。
 
     python pipeline/evaluate.py
 
-照合の鍵は、地番（筆の番号）→ 住居表示 → 建物名 の順に試す。
-比べる前に表記のゆれは `normalize.py` でそろえる。数値は小数点以下の書き方の違いを許す。
+照合はエージェントが済ませている（記録の `filing_no` を使う）。項目ごとの一致・不一致は
+`compare_photo` が `normalize.py` で表記をそろえてからコードで決める（エージェントと同じ規則）。
+数値は小数点以下の書き方の違いを許す。
+
+**誤りとは別に数えるもの**（dev-policy §7）:
+- 読めない値を作らず**建物を立てなかった**（例: IMG_3966 の高さ）。桁を補わないのは正しい挙動。
+- 看板と届出が**実際に食い違っていた**（例: IMG_3936 の敷地面積）。これは読み間違いではない。
+  エージェントが `mismatch_notified` で終えた写真の不一致は、読み直して「食い違い」として
+  知らせたものなので、読み間違い候補とは別の列で数える。
 
 出力:
     data/eval/per_photo.json … 写真ごとの詳細。建物名に個人名が入ることがあるのでリポジトリに入れない
@@ -13,7 +21,7 @@
     docs/eval-summary.md     … 件数と割合だけの集計。リポジトリに入れるのはこれだけ
 
 注意: 届出の側もモデルが読んだもので、目視確認が済んだ行（verified=1）だけが本当の正解。
-確認済みと未確認を混ぜずに出す。
+まだ1件も確認が済んでいないので、ここの数字はすべて**暫定**。
 """
 import csv
 import json
@@ -24,16 +32,25 @@ from pathlib import Path
 
 import normalize
 # 「自信なし」の境目は read_board.py を正本にする（読み取り側と評価側でずらさないため）
-from read_board import LOW_CONFIDENCE, is_other_board
+from read_board import LOW_CONFIDENCE, is_other_board, low_confidence_fields
 
 FILINGS_CSV = Path("data/meguro/filings_extracted.csv")
-READINGS_DIR = Path("samples/out")
-PHOTO_PREFIX = "data/photos"  # 自分で撮った写真だけを評価に使う（拾い画像は評価に入れない）
+AGENT_DIR = Path("data/agent")  # agent.py の判断の記録。これを集計する
 EVAL_DIR = Path("data/eval")
 SUMMARY_MD = Path("docs/eval-summary.md")
 
 MATCH, MISMATCH = "一致", "不一致"
 BOTH_ABSENT, ONLY_BOARD, ONLY_FILING = "両方なし", "看板だけ", "届出だけ"
+# 不一致を2つに分ける：読み間違いの候補と、看板と届出が実際に食い違っていたもの。
+MISREAD, DECLARED = "読み間違い", "実際の食い違い"
+
+# エージェントの4つの終わり方（dev-policy §3）。
+OUTCOME_LABELS = {
+    "built": "3Dに立てた",
+    "mismatch_notified": "食い違いを知らせた",
+    "needs_review": "要確認",
+    "needs_retake": "撮り直し",
+}
 
 # (看板側の項目, 表示名, 届出のCSVの列, 比べ方)
 FIELD_SPECS = [
@@ -81,12 +98,11 @@ OPEN_MISMATCHES = [
     "看板の写真の側は未確認なので、どちらの読み間違いかはまだ決まっていない。",
 ]
 
-KEY_LABELS = {
-    "parcel_chome": "地番＋町丁目",
-    "parcel": "地番",
-    "address": "住居表示",
-    "name": "建築物の名称",
-}
+def redact_key(key: str | None) -> str:
+    """照合の鍵を表示用に。名称を鍵にしたときは名前を伏せる（公開する md 用）。"""
+    if not key:
+        return "—"
+    return re.sub(r"名称\s*\S+", "名称（略）", key)
 
 
 # ---------- 値の取り出し ----------
@@ -171,45 +187,6 @@ def is_low_confidence(status, confidence) -> bool:
     return confidence is not None and confidence < LOW_CONFIDENCE
 
 
-# ---------- 照合 ----------
-
-def match_filing(result: dict, filings: list[dict]):
-    """看板に対応する届出を探す。(届出, 使った鍵, 注記) を返す。"""
-    parcels = set(board_item(result, "lot")[0] or [])
-    lot_chome = normalize.chome_in((result.get("lot") or {}).get("area"))
-    address = result.get("address") or {}
-    chome = normalize.chome(address.get("chome")) or lot_chome
-    block = normalize.block_number(address.get("block"))
-    name = normalize.text((result.get("fields") or {}).get("building_name", {}).get("value"))
-
-    def filing_parcels(row):
-        return set(normalize.parcels_in(row.get("lot_raw")))
-
-    tries = []
-    if parcels:
-        tries.append(("parcel_chome", lambda row: bool(parcels & filing_parcels(row))
-                      and lot_chome is not None
-                      and normalize.chome_in(row.get("lot_raw")) == lot_chome))
-        tries.append(("parcel", lambda row: bool(parcels & filing_parcels(row))))
-    if chome and block is not None:
-        tries.append(("address", lambda row: normalize.chome(row.get("address_chome")) == chome
-                      and normalize.block_number(row.get("address_block")) == block))
-    if name:
-        tries.append(("name", lambda row: normalize.text(row.get("building_name")) == name))
-
-    pool, note = filings, None
-    for key, test in tries:
-        hits = [row for row in pool if test(row)]
-        if len(hits) == 1:
-            return hits[0], key, note
-        if len(hits) > 1:
-            pool = hits  # 絞り込めたので、次の鍵でさらに絞る
-            note = f"{KEY_LABELS[key]}で{len(hits)}件に当たった"
-    if pool is not filings and len(pool) > 1:
-        return None, None, note
-    return None, None, note or "どの鍵でも当たらなかった"
-
-
 # ---------- 集計 ----------
 
 def compare_photo(result: dict, row: dict) -> list[dict]:
@@ -240,19 +217,34 @@ def compare_photo(result: dict, row: dict) -> list[dict]:
     return comparisons
 
 
+def bucket(outcome: str, declared: bool) -> str:
+    """不一致を、読み間違い候補と「実際の食い違い」に振り分ける。"""
+    if outcome == MISMATCH:
+        return DECLARED if declared else MISREAD
+    return outcome
+
+
 def aggregate(photos: list[dict]) -> dict:
-    """項目ごとの一致数と、確信度との重なりを数える。"""
+    """項目ごとの一致数と、確信度との重なりを数える。
+
+    各 photo は compare_photo の結果 `comparisons` と、エージェントが
+    `mismatch_notified` で終えたかの `declared` を持つ。
+    """
     by_field = {name: Counter() for name, _, _, _ in FIELD_SPECS}
     totals = Counter()
     overlap = Counter()
     filing_uncertain_on_mismatch = 0
     for photo in photos:
+        declared = photo.get("declared", False)
         for c in photo["comparisons"]:
-            by_field[c["field"]][c["outcome"]] += 1
-            totals[c["outcome"]] += 1
-            if c["outcome"] in (MATCH, MISMATCH):
-                overlap[(c["low_confidence"], c["outcome"] == MISMATCH)] += 1
-            if c["outcome"] == MISMATCH and c["filing_uncertain"]:
+            b = bucket(c["outcome"], declared)
+            by_field[c["field"]][b] += 1
+            totals[b] += 1
+            # 確信度の当てになり方は「読み間違い」だけで見る。実際の食い違いは
+            # 読み間違いではない（IMG_3936 は確信度0.95で正しく読めていた）ので外す。
+            if b in (MATCH, MISREAD):
+                overlap[(c["low_confidence"], b == MISREAD)] += 1
+            if b == MISREAD and c["filing_uncertain"]:
                 filing_uncertain_on_mismatch += 1
     return {
         "photos": len(photos),
@@ -269,7 +261,8 @@ def aggregate(photos: list[dict]) -> dict:
 
 
 def rate(counts: dict) -> float | None:
-    comparable = counts.get(MATCH, 0) + counts.get(MISMATCH, 0)
+    """一致率。分母は一致＋読み間違いだけ（実際の食い違いは誤りではないので外す）。"""
+    comparable = counts.get(MATCH, 0) + counts.get(MISREAD, 0)
     return counts.get(MATCH, 0) / comparable if comparable else None
 
 
@@ -280,19 +273,19 @@ def percent(value) -> str:
 # ---------- 出力 ----------
 
 def field_table(summary: dict) -> list[str]:
-    lines = ["| 項目 | 比べられた | 一致 | 不一致 | 一致率 | 看板だけ | 届出だけ | 両方なし |",
-             "|---|---|---|---|---|---|---|---|"]
+    lines = ["| 項目 | 比べられた | 一致 | 読み間違い | 実際の食い違い | 一致率 | 看板だけ | 届出だけ | 両方なし |",
+             "|---|---|---|---|---|---|---|---|---|"]
+
+    def row(label, c, bold=False):
+        comparable = c.get(MATCH, 0) + c.get(MISREAD, 0)
+        b = "**" if bold else ""
+        return (f"| {b}{label}{b} | {b}{comparable}{b} | {b}{c.get(MATCH, 0)}{b} | "
+                f"{c.get(MISREAD, 0)} | {c.get(DECLARED, 0)} | {b}{percent(rate(c))}{b} | "
+                f"{c.get(ONLY_BOARD, 0)} | {c.get(ONLY_FILING, 0)} | {c.get(BOTH_ABSENT, 0)} |")
+
     for name, label, _, _ in FIELD_SPECS:
-        c = summary["by_field"].get(name, {})
-        comparable = c.get(MATCH, 0) + c.get(MISMATCH, 0)
-        lines.append(f"| {label} | {comparable} | {c.get(MATCH, 0)} | {c.get(MISMATCH, 0)} | "
-                     f"{percent(rate(c))} | {c.get(ONLY_BOARD, 0)} | {c.get(ONLY_FILING, 0)} | "
-                     f"{c.get(BOTH_ABSENT, 0)} |")
-    t = summary["totals"]
-    comparable = t.get(MATCH, 0) + t.get(MISMATCH, 0)
-    lines.append(f"| **合計** | **{comparable}** | **{t.get(MATCH, 0)}** | **{t.get(MISMATCH, 0)}** | "
-                 f"**{percent(rate(t))}** | {t.get(ONLY_BOARD, 0)} | {t.get(ONLY_FILING, 0)} | "
-                 f"{t.get(BOTH_ABSENT, 0)} |")
+        lines.append(row(label, summary["by_field"].get(name, {})))
+    lines.append(row("合計", summary["totals"], bold=True))
     return lines
 
 
@@ -306,59 +299,117 @@ def overlap_table(summary: dict) -> list[str]:
     ]
 
 
+def outcomes_table(photos: list[dict]) -> list[str]:
+    lines = ["| 写真 | 結論 | 届出 | 鍵 | 手数 | 3D |",
+             "|---|---|---|---|---|---|"]
+    for p in photos:
+        no = f"No.{p['filing_no']}" if p.get("filing_no") else "—"
+        lines.append(
+            f"| {p['photo']} | {OUTCOME_LABELS.get(p['outcome'], p['outcome'])} | "
+            f"{no} | {redact_key(p.get('match_key'))} | {p['steps']} | "
+            f"{'✓' if p.get('built_3d') else '—'} |")
+    return lines
+
+
+def declared_lines(matched: list[dict]) -> list[str]:
+    """看板と届出が実際に食い違った項目を、数値だけで並べる（名称は出さない）。"""
+    out = []
+    for m in matched:
+        if not m.get("declared"):
+            continue
+        for c in m["comparisons"]:
+            # 建築物の名称は公開する md に出さない（個人名が入りうる）
+            if c["outcome"] == MISMATCH and c["field"] != "building_name":
+                out.append(
+                    f"- {m['photo']}（No.{m['filing_no']}）{c['label']}："
+                    f"看板 {c['board']} / 届出 {c['filing']}"
+                    "。読み直しても一致せず `mismatch_notified` で終了。")
+    return out or ["なし（この回では実際の食い違いは出なかった）。"]
+
+
 def write_markdown(report: dict):
-    verified, unverified = report["verified"], report["unverified"]
     counts = report["photo_counts"]
+    o = report["outcome_counts"]
+    agg = report["all"]
     lines = [
-        "# 読み取り精度の評価",
+        "# 読み取り精度の評価（エージェント基準）",
         "",
-        f"`pipeline/evaluate.py` が作る集計。写真ごとの詳細は `data/eval/`（建物名に個人名が",
-        "入ることがあるのでリポジトリに入れない）。",
+        "`pipeline/evaluate.py` が `data/agent/*.json`（`agent.py` の判断の記録）を集計する。",
+        "写真ごとの詳細は `data/eval/`（建物名に個人名が入ることがあるのでリポジトリに入れない）。",
         "",
-        f"- 評価した写真: {counts['total']}枚",
-        f"- 届出と照合できた: {counts['matched']}枚"
-        f"（うち目視確認済みの届出 {verified['photos']}枚／未確認 {unverified['photos']}枚）",
-        f"- 建築計画のお知らせではなかった: {counts['other_board']}枚",
-        f"- 照合できなかった: {counts['unmatched']}枚",
-        f"- 看板が読めなかった: {counts['unreadable']}枚",
+        "**届出はまだ目視確認が済んでいない**（確認済み 0件）ので、ここの数字はすべて暫定値。",
         "",
-        "照合に使った鍵（地番 → 住居表示 → 建築物の名称 の順に試した結果）:",
+        f"- 処理した写真: {counts['total']}枚",
+        f"- 届出と照合できた: {counts['matched']}枚（すべて目視確認前の暫定）",
+        f"- 3Dに立てた: {counts['built_3d']}枚",
+        f"- 対象外の看板（労災票など）: {counts['other_board']}枚",
+        f"- 立てずに終えた（読めない／届出に無い）: {counts['not_built']}枚",
         "",
-    ] + [f"- {KEY_LABELS[key]}: {n}枚" for key, n in report["match_keys"].items()] + [
+        "## エージェントの結論",
         "",
-        "## 目視確認済みの届出との比較",
+    ] + outcomes_table(report["photos"]) + [
+        "",
+        "終わり方の内訳（dev-policy §3 の4つ）:",
+        "",
+        f"- 3Dに立てた（built）: {o.get('built', 0)}枚",
+        f"- 食い違いを知らせた（mismatch_notified）: {o.get('mismatch_notified', 0)}枚",
+        f"- 要確認（needs_review）: {o.get('needs_review', 0)}枚",
+        f"- 撮り直し（needs_retake）: {o.get('needs_retake', 0)}枚",
+        "",
+        "## 立てなかった理由（誤りとは別に数える）",
+        "",
+        "値を作らずに立てなかったのは正しい挙動なので、読み取りの誤りとは分けて数える"
+        "（dev-policy §4「ほかの欄から逆算して数字を埋めさせない」）。",
         "",
     ]
-    if verified["photos"]:
-        lines += field_table(verified)
-    else:
-        lines += ["目視確認（`verified=1`）が済んだ届出がまだ1件もないため、ここは空。",
-                  "下の表は未確認の読み取り結果どうしの比較なので、精度の数字としては暫定。"]
-    lines += ["", "## 目視確認が済んでいない届出との比較（暫定）", ""]
-    if unverified["photos"]:
-        lines += field_table(unverified)
-    else:
-        lines += ["該当なし。"]
+    for p in report["not_built"]:
+        lines.append(f"- {p['photo']} — {p['reason']}")
+    for p in report["other_board"]:
+        lines.append(f"- {p['photo']} — 建築計画のお知らせではない（対象外の看板）")
+    if not (report["not_built"] or report["other_board"]):
+        lines.append("なし。")
     lines += [
+        "",
+        "## 看板の読み取り精度（届出と照合できた写真・暫定）",
+        "",
+        "エージェントの読み取りと届出を項目ごとに比べた。**不一致は2つに分ける**：",
+        "読み間違いの候補と、看板と届出が実際に食い違っていたもの（下の別節）。",
+        "一致率の分母は 一致＋読み間違い だけで、実際の食い違いは誤りに数えない。",
+        "",
+    ]
+    if agg["photos"]:
+        lines += field_table(agg)
+    else:
+        lines += ["照合できた写真がない。"]
+    lines += [
+        "",
+        "## 看板と届出が実際に食い違った項目（読み間違いではない）",
+        "",
+        "エージェントが読み直してもそろわず、`mismatch_notified` で利用者に知らせたもの。",
+        "どちらかに決めず、根拠（地番）とともに残す。",
+        "",
+    ] + declared_lines(report["matched"]) + [
         "",
         "## 確信度の当てになり方",
         "",
-        "看板を読んだモデルの自己申告の確信度と、実際の不一致の重なり"
-        f"（照合できた{counts['matched']}枚、比べられた項目だけ）。",
+        "看板を読んだモデルの自己申告の確信度と、**読み間違い**の重なり"
+        "（実際の食い違いは正しく読めているので外す）。",
         "",
-    ] + overlap_table(report["all"]) + [
+    ] + overlap_table(agg) + [
         "",
-        f"- 不一致のうち、届出の側でモデルが自信なしにしていた項目: "
-        f"{report['all']['filing_uncertain_on_mismatch']}件"
-        "（看板ではなく届出の読み間違いの可能性がある）",
+        f"- 読み間違いのうち、届出の側でもモデルが自信なしにしていた項目: "
+        f"{agg['filing_uncertain_on_mismatch']}件（看板ではなく届出の読み間違いの可能性）",
         "",
         "## 食い違った項目の読み直し",
         "",
-        "検算に引っかかった項目だけを、推論の強さ`medium`で読み直した結果（dev-policy §3）。",
+        "検算や届出との食い違いで引っかかった項目だけを、推論の強さ`medium`で読み直した"
+        "結果（dev-policy §3）。エージェントの `reread_fields` の手から数える。",
         "",
         f"- 読み直した写真: {report['reread_counts']['photos']}枚",
-        f"- 値が変わった: {report['reread_counts']['changed_a_value']}件",
-        f"- 読み直しで矛盾が解消した: {report['reread_counts']['resolved']}件",
+        f"- 値が変わった: {report['reread_counts']['changed_a_value']}件"
+        "（読み直しても値は作らない。桁を補うのを防ぐため）",
+        f"- 読み直しても検算の矛盾が残った: {report['reread_counts']['still_inconsistent']}件"
+        "（この場合は建物を立てない。IMG_3966 の高さ）",
         "",
         "## 分かっている読み間違いの例",
         "",
@@ -368,32 +419,19 @@ def write_markdown(report: dict):
         "",
     ] + [f"- {example}" for example in OPEN_MISMATCHES] + [
         "",
-        "## 照合できなかった写真・別の看板だった写真",
-        "",
-    ]
-    for photo in report["photos_other"]:
-        lines.append(f"- {photo['photo']} — 建築計画のお知らせではない（{photo['note']}）")
-    for photo in report["photos_unmatched"]:
-        lines.append(f"- {photo['photo']} — 届出と照合できない（{photo['note']}）")
-    for photo in report["photos_unreadable"]:
-        lines.append(f"- {photo['photo']} — 看板が読めない（{photo['note']}）")
-    if not (report["photos_other"] or report["photos_unmatched"] or report["photos_unreadable"]):
-        lines.append("なし。")
-    lines += [
-        "",
         "## 比べ方",
         "",
-        "- 照合の鍵は 地番（筆の番号）→ 住居表示 → 建築物の名称 の順に試す",
+        "- 照合はエージェントが済ませている（地番 → 住居表示 → 建築物の名称 の順に試す）。"
+        "ここでは記録の `filing_no` の届出と項目ごとに比べる",
         "- 数値は小数点以下の書き方の違いを許す（`385.6` と `385.60` は一致）",
         "- 文字は `pipeline/normalize.py` で表記をそろえてから比べる"
         "（丁目は漢数字、「ヶ」「ケ」、全角と半角、空白）",
         "- 構造は 木造 / S造 / RC造 / SRC造 / その他 の5つにそろえてから比べる",
         "- 日付は年月までしか読めなかった場合、年月が合っていれば一致とみなす",
-        "- 高さは3つ（高さ・塔屋等まで・軒高）を別々に比べる。看板と届出で呼び方がずれることが"
-        "あるので、3Dに使う数字が合っているかは「3D表示に使う高さ」"
-        "（最高の高さがあればそれ、なければ高さ）で別に見る",
-        "- 一致率の分母は、看板と届出の両方に値があった項目だけ",
+        "- 高さは3つ（高さ・塔屋等まで・軒高）を別々に比べ、3Dに使う数字が合っているかは"
+        "「3D表示に使う高さ」（最高の高さがあればそれ、なければ高さ）で別に見る",
         f"- 「自信なし」は確信度 < {LOW_CONFIDENCE}、または状態が `unreadable`・`masked` の項目",
+        f"- `mismatch_notified` で終えた写真の不一致は「実際の食い違い」として別に数える",
         "",
     ]
     SUMMARY_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -410,89 +448,116 @@ def is_verified(row: dict) -> bool:
     return (row.get("verified") or "").strip().lower() in ("1", "true", "yes", "○")
 
 
-def load_readings() -> list[tuple[str, list[dict]]]:
-    """自分で撮った写真の読み取り結果を、写真ごとにまとめて返す。"""
-    photos = []
-    for path in sorted(READINGS_DIR.glob("*.json")):
-        results = json.loads(path.read_text(encoding="utf-8"))
-        results = [r for r in results if (r.get("source_image") or "").startswith(PHOTO_PREFIX)]
-        if results:
-            photos.append((path.stem, results))
-    return photos
+def load_agent_records() -> list[dict]:
+    """agent.py の判断の記録を写真の名前順に読む。"""
+    records = []
+    for path in sorted(AGENT_DIR.glob("*.json")):
+        records.append(json.loads(path.read_text(encoding="utf-8")))
+    return records
+
+
+# 3D表示に効く項目（これが読めないと建物を立てない）。
+CRITICAL_3D = {"height_m", "max_height_m", "building_area_m2"}
+
+
+def not_built_reason(reading: dict, has_filing: bool) -> str:
+    """建物を立てなかった理由を一行で。"""
+    low = {f["field"] for f in low_confidence_fields(reading)}
+    unreadable = {name for name, f in (reading.get("fields") or {}).items()
+                  if isinstance(f, dict) and f.get("status") == "unreadable"}
+    bad = (low | unreadable) & CRITICAL_3D
+    if bad:
+        names = "・".join(sorted(bad))
+        return (f"高さ・建築面積が読めず（{names}）、桁を補わずに値を作らなかった"
+                "（dev-policy §4）。" + ("" if has_filing else "届出も中高層リストに無い。"))
+    if not has_filing:
+        return "届出（中高層の標識設置届）に載っていない（延べ1万㎡超など）"
+    return "要確認"
+
+
+def reread_stats(records: list[dict]) -> dict:
+    """エージェントの reread_fields の手から、読み直しの効きを数える。"""
+    photos, changed, still_inconsistent = set(), 0, 0
+    for rec in records:
+        for step in rec.get("steps") or []:
+            if step.get("tool") != "reread_fields":
+                continue
+            out = step.get("output") or {}
+            photos.add(rec["photo"])
+            if out.get("changed"):
+                changed += 1
+            # 読み直した後も検算の矛盾が残っていれば、建物は立てない（IMG_3966）
+            if out.get("consistency_issues"):
+                still_inconsistent += 1
+    return {"photos": len(photos), "changed_a_value": changed,
+            "still_inconsistent": still_inconsistent}
 
 
 def main():
     filings = load_filings()
-    readings = load_readings()
+    by_no = {row["filing_no"]: row for row in filings if (row.get("filing_no") or "").strip()}
+    records = load_agent_records()
     print(f"届出 {len(filings)}件（目視確認済み {sum(map(is_verified, filings))}件）、"
-          f"写真 {len(readings)}枚")
+          f"エージェントの記録 {len(records)}件")
 
-    # medium での読み直しがどれだけ効いたか（照合できなかった写真も含めて数える）
-    rereads = []
-    for photo, results in readings:
-        for result in results:
-            done = result.get("reread")
-            if done:
-                rereads.append({"photo": photo, "fields": done["fields"],
-                                "changed": done["changed"], "resolved": done.get("resolved"),
-                                "remaining": [i["message"] for i in
-                                              (result.get("consistency_issues") or [])]})
+    photos_summary = []  # 結論テーブル用（全件）
+    matched, other, not_built = [], [], []
+    for rec in records:
+        reading = rec.get("reading") or {}
+        outcome = rec.get("outcome") or "needs_review"
+        filing_no = rec.get("filing_no")
+        row = by_no.get(str(filing_no)) if filing_no is not None else by_no.get(filing_no)
+        built_3d = bool(rec.get("volume"))
 
-    matched, unmatched, other, unreadable = [], [], [], []
-    for photo, results in readings:
-        candidates = [r for r in results
-                      if (r.get("fields") or {}).get("notice_type", {}).get("value")
-                      in ("building", "demolition")]
-        if not candidates:
-            # 1枚に看板が複数写っていると同じ理由が並ぶので、重複を落とす
-            reasons = dict.fromkeys(filter(None, (r.get("retake_reason") for r in results)))
-            note = "、".join(reasons) or "判定できず"
-            target = other if any(is_other_board(r) for r in results) else unreadable
-            target.append({"photo": photo, "note": note})
-            continue
+        entry = {
+            "photo": rec["photo"],
+            "outcome": outcome,
+            "filing_no": filing_no,
+            "match_key": rec.get("match_key"),
+            "steps": len(rec.get("steps") or []),
+            "built_3d": built_3d,
+        }
+        photos_summary.append(entry)
 
-        for result in candidates:
-            row, key, note = match_filing(result, filings)
-            if row:
-                matched.append({
-                    "photo": photo,
-                    "read_image": result.get("read_image"),
-                    "filing_no": row.get("filing_no"),
-                    "match_key": key,
-                    "verified": is_verified(row),
-                    "page_image": row.get("page_image"),
-                    "filing_uncertain": row.get("uncertain"),
-                    "consistency_issues": result.get("consistency_issues") or [],
-                    "comparisons": compare_photo(result, row),
-                })
-                break
+        if is_other_board(reading):
+            other.append({"photo": rec["photo"]})
+        elif row is not None:
+            matched.append({
+                "photo": rec["photo"],
+                "outcome": outcome,
+                "filing_no": filing_no,
+                "match_key": rec.get("match_key"),
+                "verified": is_verified(row),
+                "built_3d": built_3d,
+                # mismatch_notified で終えた写真の不一致は「実際の食い違い」
+                "declared": outcome == "mismatch_notified",
+                "filing_uncertain": row.get("uncertain"),
+                "comparisons": compare_photo(reading, row),
+            })
         else:
-            unmatched.append({"photo": photo, "note": note or "どの鍵でも当たらなかった"})
+            not_built.append({
+                "photo": rec["photo"],
+                "reason": not_built_reason(reading, has_filing=False),
+            })
 
     report = {
         "low_confidence_threshold": LOW_CONFIDENCE,
         "filings": len(filings),
         "filings_verified": sum(map(is_verified, filings)),
         "photo_counts": {
-            "total": len(readings),
+            "total": len(records),
             "matched": len(matched),
-            "unmatched": len(unmatched),
+            "built_3d": sum(1 for p in photos_summary if p["built_3d"]),
             "other_board": len(other),
-            "unreadable": len(unreadable),
+            "not_built": len(not_built),
         },
-        "match_keys": dict(Counter(m["match_key"] for m in matched)),
-        "rereads": rereads,
-        "reread_counts": {
-            "photos": len({r["photo"] for r in rereads}),
-            "changed_a_value": sum(1 for r in rereads if r["changed"]),
-            "resolved": sum(1 for r in rereads if r["resolved"]),
-        },
+        "outcome_counts": dict(Counter(p["outcome"] for p in photos_summary)),
+        "reread_counts": reread_stats(records),
         "all": aggregate(matched),
-        "verified": aggregate([m for m in matched if m["verified"]]),
-        "unverified": aggregate([m for m in matched if not m["verified"]]),
-        "photos_unmatched": unmatched,
-        "photos_other": other,
-        "photos_unreadable": unreadable,
+        "photos": photos_summary,
+        "matched": matched,
+        "other_board": other,
+        "not_built": not_built,
     }
 
     EVAL_DIR.mkdir(parents=True, exist_ok=True)
@@ -503,10 +568,10 @@ def main():
     write_markdown(report)
 
     t = report["all"]["totals"]
-    print(f"照合できた {len(matched)}枚 / 別の看板 {len(other)}枚 / "
-          f"照合できず {len(unmatched)}枚 / 読めず {len(unreadable)}枚")
-    print(f"一致 {t.get(MATCH, 0)} / 不一致 {t.get(MISMATCH, 0)} "
-          f"（一致率 {percent(rate(t))}）")
+    print(f"照合できた {len(matched)}枚 / 3Dに立てた {report['photo_counts']['built_3d']}枚 / "
+          f"対象外 {len(other)}枚 / 立てず {len(not_built)}枚")
+    print(f"一致 {t.get(MATCH, 0)} / 読み間違い {t.get(MISREAD, 0)} / "
+          f"実際の食い違い {t.get(DECLARED, 0)} （一致率 {percent(rate(t))}）")
     print(f"\n書き出しました → {EVAL_DIR}/per_photo.json, {EVAL_DIR}/summary.json, {SUMMARY_MD}")
 
 
