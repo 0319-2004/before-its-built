@@ -104,8 +104,115 @@ window.addEventListener("unhandledrejection", (e) =>
   diag.errors.push(`unhandledrejection: ${String((e as PromiseRejectionEvent).reason)}`),
 );
 
+/**
+ * アプリのトップ（着地ページ）。何も付けずに開いた審査員が最初に見る画面。
+ * 一言の説明（英語を主、日本語を併記）と「サンプルで試す」の大きなボタンを出す。
+ * 見た目は Design canvas「Before It's Built デモ画面」の夜の街の方向性に寄せる。
+ * ここからモデルは呼ばない（ボタンでサンプルモードへ移る）。
+ */
+function showLanding() {
+  const CSS = `
+#landing {
+  position: absolute; inset: 0; z-index: 30; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  text-align: center; padding: 24px;
+  color: #eaf0f8; font: 15px/1.6 system-ui, -apple-system, sans-serif;
+  background:
+    radial-gradient(120% 80% at 50% 12%, rgba(45,125,255,0.16), transparent 60%),
+    linear-gradient(180deg, #070b14 0%, #0a1020 55%, #0c1526 100%);
+}
+/* 夜の街のシルエット（下端のビル列） */
+#landing .skyline { position: absolute; left: 0; right: 0; bottom: 0; height: 34vh;
+  display: flex; align-items: flex-end; gap: 4px; padding: 0 2px; opacity: 0.5;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 55%);
+          mask-image: linear-gradient(180deg, transparent, #000 55%); }
+#landing .skyline i { flex: 1; background: linear-gradient(180deg, #121c30, #0a1120); border-top: 1px solid rgba(120,160,220,0.14); }
+#landing .skyline i.blue { background: linear-gradient(180deg, rgba(45,125,255,0.5), rgba(45,125,255,0.08)); box-shadow: 0 0 24px rgba(45,125,255,0.35); }
+#landing .card { position: relative; z-index: 1; max-width: 620px; }
+#landing .kicker { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: #6f8cc0; margin: 0 0 14px; }
+#landing h1 { margin: 0 0 6px; font-size: clamp(34px, 7vw, 58px); font-weight: 700; letter-spacing: -.01em;
+  background: linear-gradient(90deg, #cfe0ff, #7fb0ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+#landing .lead { margin: 10px auto 4px; max-width: 540px; font-size: clamp(15px, 2.4vw, 18px); color: #d6deeb; }
+#landing .lead-ja { margin: 0 auto 26px; max-width: 540px; font-size: 13.5px; color: #93a0b6; }
+#landing .cta { appearance: none; cursor: pointer; border: 0; border-radius: 999px;
+  padding: 16px 30px; font: inherit; font-size: 17px; font-weight: 650; color: #06101f;
+  background: linear-gradient(180deg, #8fc0ff, #2d7dff); box-shadow: 0 12px 34px rgba(45,125,255,0.45);
+  display: inline-flex; flex-direction: column; align-items: center; line-height: 1.15; }
+#landing .cta span { font-size: 11.5px; font-weight: 500; color: rgba(6,16,31,0.72); margin-top: 2px; }
+#landing .cta:hover { filter: brightness(1.06); }
+#landing .more { margin: 20px 0 0; display: flex; gap: 8px 18px; flex-wrap: wrap; justify-content: center; font-size: 13px; }
+#landing .more a { color: #8fb6ff; text-decoration: none; border-bottom: 1px solid rgba(143,182,255,0.3); padding-bottom: 1px; }
+#landing .more a:hover { color: #bcd4ff; }
+#landing .foot { position: absolute; bottom: 12px; left: 0; right: 0; z-index: 1; font-size: 11px; color: #5c6782; }
+`;
+  document.head.appendChild(document.createElement("style")).textContent = CSS;
+
+  const root = document.createElement("div");
+  root.id = "landing";
+
+  // 夜の街のシルエット（青く光る1本が「これから建つ建物」）
+  const sky = document.createElement("div");
+  sky.className = "skyline";
+  const heights = [40, 62, 48, 80, 55, 70, 46, 88, 52, 66, 44, 74, 58, 50, 82, 60, 47, 72, 54, 64];
+  heights.forEach((h, i) => {
+    const b = document.createElement("i");
+    b.style.height = `${h}%`;
+    if (i === 7) b.className = "blue"; // 1本だけ青く光らせる
+    sky.appendChild(b);
+  });
+  root.appendChild(sky);
+
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `
+    <p class="kicker">PLATEAU × Meta AI</p>
+    <h1>Before It's Built</h1>
+    <p class="lead">Snap the sign on a construction site, and an AI agent raises the
+      building that's <b>about to be built</b> — and the shadow it will cast —
+      in 3D on the real city.</p>
+    <p class="lead-ja">工事の「建築計画のお知らせ」を撮ると、これから建つ建物と日影が、
+      PLATEAUの3D都市の上に立ち上がります。</p>
+  `;
+  const cta = document.createElement("button");
+  cta.className = "cta";
+  cta.type = "button";
+  cta.innerHTML = `Try the sample →<span>サンプルで試す</span>`;
+  cta.addEventListener("click", () => {
+    location.search = "?mode=sample";
+  });
+  card.appendChild(cta);
+
+  const more = document.createElement("div");
+  more.className = "more";
+  more.innerHTML = `
+    <a href="?stage=1&shadow=1">Planned buildings &amp; shadows →</a>
+    <a href="?stage=2&shadow=1">+ buildings to be demolished →</a>`;
+  card.appendChild(more);
+  root.appendChild(card);
+
+  const foot = document.createElement("div");
+  foot.className = "foot";
+  foot.textContent = "Nakameguro, Tokyo · winter-solstice shadows are a guide, not a legal assessment";
+  root.appendChild(foot);
+
+  document.body.appendChild(root);
+}
+
 async function main() {
   const params = new URLSearchParams(location.search);
+
+  // 何も付けずに開いたら、アプリのトップ（着地ページ）を出す。
+  // 開発用の 3D Tiles 確認ページと左上のHUDは ?debug=1 のときだけ。
+  const debug = params.get("debug") === "1";
+  const sampleMode = params.get("mode") === "sample";
+  const appView = sampleMode || params.has("stage");
+  if (!appView && !debug) {
+    hud.style.display = "none";
+    showLanding();
+    return;
+  }
+  hud.style.display = debug ? "" : "none";
+
   const requested = params.get("set") ?? "";
   const name = isTilesetName(requested) ? requested : DEFAULT_SET;
   const url = resolveTilesetUrl(name);
@@ -132,7 +239,6 @@ async function main() {
   // `?time=10` で現地の視太陽時を指定できる。日影（冬至）もここを使う。
   // サンプルモードは審査員が何も付けずに開くので、既定で昼にしておく
   // （既定の「今の時刻」のままだと、夜に開いた人には建物が真っ黒に見える）。
-  const sampleMode = params.get("mode") === "sample";
   const solarHours = params.has("time")
     ? Number(params.get("time"))
     : sampleMode
@@ -243,7 +349,6 @@ async function main() {
   // サンプルモード: 事前に計算したエージェントの判断の記録を流す（APIは呼ばない）。
   // 診断用のHUDは審査員には要らないので隠す。
   if (sampleMode) {
-    hud.style.display = "none";
     try {
       const s = await runSampleMode(view, {
         id: params.get("id"),
