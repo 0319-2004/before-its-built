@@ -240,7 +240,12 @@ export type SampleDiag = {
 
 export async function runSampleMode(
   view: ThreeView<any>,
-  options: { url?: string; id?: string | null; fast?: boolean } = {},
+  options: {
+    url?: string;
+    id?: string | null;
+    fast?: boolean;
+    freecam?: boolean;
+  } = {},
 ): Promise<SampleDiag> {
   const url = options.url ?? SAMPLES_URL;
   const response = await fetch(url);
@@ -312,15 +317,18 @@ export async function runSampleMode(
         ],
       },
     });
-    const describe = (topZ: number) =>
+    // `extrudedHeight` は**底面からの相対の押し出し量**（NAVARA の仕様。
+    // 「Extrusion height for polygons in meters」。絶対の天面高ではない）。
+    // `height` が底面の楕円体高で、そこから `extrudedHeight` m 立ち上がる。
+    // ここに `base_z + 高さ` を渡すと約66mの塔になる取り違えを一度やっている。
+    const describe = (riseM: number) =>
       ({
         type: "vector",
         source,
         polygon: {
           color: BLUE,
-          // 楕円体高。底面と天面の両方を明示する（dev-policy §15）。
-          height: volume.base_z_m,
-          extrudedHeight: topZ,
+          height: volume.base_z_m, // 底面の楕円体高（dev-policy §15）
+          extrudedHeight: riseM, // 底面からの高さ[m]
           perPositionHeight: false,
           clampToGround: false,
           castShadow: true,
@@ -333,22 +341,21 @@ export async function runSampleMode(
         },
       }) as any;
 
-    // 高さ0から始める。押し出しが0だと面が潰れるので、わずかに持ち上げる。
-    buildingLayer = view.addLayer(describe(volume.base_z_m + 0.05));
-    const target = volume.base_z_m + volume.display_height_m;
+    const hM = volume.display_height_m;
     if (options.fast) {
-      buildingLayer.update(describe(target));
+      // 計測・審査用の一発表示。最初から本来の高さで立てる。
+      buildingLayer = view.addLayer(describe(hM));
       return;
     }
+    // 高さ0から立ち上げる。押し出しが0だと面が潰れるので、わずかに持ち上げる。
+    buildingLayer = view.addLayer(describe(0.05));
     const started = performance.now();
     await new Promise<void>((done) => {
       const tick = () => {
         const t = Math.min(1, (performance.now() - started) / RISE_MS);
         // 立ち上がりは最後にゆるめる（easeOutCubic）
         const eased = 1 - Math.pow(1 - t, 3);
-        buildingLayer?.update(
-          describe(volume.base_z_m + Math.max(0.05, volume.display_height_m * eased)),
-        );
+        buildingLayer?.update(describe(Math.max(0.05, hM * eased)));
         if (t < 1) requestAnimationFrame(tick);
         else done();
       };
@@ -372,8 +379,10 @@ export async function runSampleMode(
       el("div", "hint", `${sample.label} — エージェントが${sample.steps.length}手で判断しました`),
     );
 
-    // 建物があるなら、立ち上がるところが見えるように先に寄っておく
-    if (sample.volume) {
+    // 建物があるなら、立ち上がるところが見えるように先に寄っておく。
+    // `freecam` のときは URL のカメラ（main.ts の setCamera）をそのまま使う。
+    // 段階1と同じ視点で撮り比べて縦横比を測るための計測用の抜け道。
+    if (sample.volume && !options.freecam) {
       const center = centroid(sample.volume.footprint);
       void view.flyTo(
         {

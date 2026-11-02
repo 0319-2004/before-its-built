@@ -81,6 +81,39 @@ view.atmosphere.getSunElevation({ lng, lat });       // 負なら夜
 `?time=10` を足し、太陽高度をHUDに出して、負のときは断りを書くようにした。
 日影（冬至、dev-policy §10）もこの仕組みの上に載せる。
 
+## 4.5 ずんぐりした建物が塔に見えた（`extrudedHeight` の取り違え）
+
+IMG_3931（16m四方×高さ9.9mの低層）が、サンプルモードで**縦長の塔**に見えた。
+`planned.geojson` の同じ棟（届出No.3）と数値は完全に一致していたので、
+段階1と**同じ視点で撮り比べて青い画素の縦横を測った**（目分量で決めない）。
+
+- **真上（`pitch=-90`）**：段階1もサンプルもフットプリントは**完全な正方形**
+  （W/H=1.00、60×60px と 56×56px）。形状データは正しい。
+- **同じ斜め視点（`pitch=-22`）**：段階1もサンプルも同じように**塔に見えた**。
+  つまり `sample.ts` 固有ではなく**段階1と共通**で、原因はカメラでも形でもなく高さ。
+
+高さ入力を 0.1m／2m／30m と変えてほぼ真横から撮ると、**2mでも約58mの塔**のまま。
+ここで確定した：**NAVARA の `extrudedHeight` は底面からの相対の押し出し量**
+（型定義のコメントも「Extrusion height for polygons in meters」）で、
+Cesium のような**絶対の天面高ではない**。
+
+```ts
+// 取り違え（全棟が base_z+高さ ≈ 66m の塔になる）
+height: p.base_z_m, extrudedHeight: p.base_z_m + p.display_height_m,
+// 正しい（底面 base_z から 高さ[m] だけ立ち上げる）
+height: p.base_z_m, extrudedHeight: p.display_height_m,
+```
+
+直したのは `stage0.ts` / `stage1.ts` / `sample.ts` の3か所。段階0の重なり検証は
+**底面の一致**しか見ていなかったので（相対押し出しでも底は一致する）素通りしていた。
+
+**撮り比べの再現**：`?mode=sample&freecam=1` でサンプルの `flyTo` を止め、
+URL のカメラ（`?lng&lat&height&pitch&heading`）を段階1とそろえて撮る。
+
+おまけ：`fast=1` の一発表示が、`addLayer` 直後に**同期で**呼んだ `update()` で
+高さを取りこぼしていた（生成直後の同期 update は落ちる。rAF 経由の立ち上がり
+アニメは効く）。一発表示は最初から本来の高さで `addLayer` するように直した。
+
 ## 5. 確認前の印
 
 届出はまだ**1件も目視確認が済んでいない**（`verified` 列が全部空）。

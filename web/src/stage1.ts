@@ -179,9 +179,11 @@ export async function addStage1(
       source,
       polygon: {
         color: PLANNED_COLOR,
-        // 楕円体高。底面と天面の両方を明示する（段階0と同じ）。
+        // `height` が底面の楕円体高、`extrudedHeight` はそこからの**相対の
+        // 押し出し量**[m]（NAVARA の仕様。絶対の天面高ではない）。
+        // `base_z + 高さ` を渡すと約66mの塔になる取り違えを一度やっている。
         height: p.base_z_m,
-        extrudedHeight: p.base_z_m + p.display_height_m,
+        extrudedHeight: p.display_height_m,
         perPositionHeight: false,
         clampToGround: false,
         castShadow: true,

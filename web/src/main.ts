@@ -233,6 +233,9 @@ async function main() {
       const s = await runSampleMode(view, {
         id: params.get("id"),
         fast: params.get("fast") === "1",
+        // 計測用: URL のカメラ（?lng/lat/height/pitch/heading）をそのまま使い、
+        // open() の flyTo を止める。段階1と同じ視点で撮り比べるため。
+        freecam: params.get("freecam") === "1",
       });
       diag.sample = s;
       log(`サンプルモード: ${s.count}件（3Dを立てた件 ${s.builtId ?? "なし"}）`);

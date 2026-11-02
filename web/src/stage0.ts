@@ -146,6 +146,8 @@ export function addStage0(
   // --- 計画建物（青） ---
   // 輪郭は2次元で渡し、高さは材質の height / extrudedHeight で与える。
   // perPositionHeight を false にしておくと、頂点のZではなくこの2つを使う。
+  // `height` が底面の楕円体高、`extrudedHeight` はそこからの**相対の
+  // 押し出し量**[m]（NAVARA の仕様。絶対の天面高を渡すと塔になる）。
   if (!options.hidePlanned) {
     const plannedSource = view.addSource({
       type: "geojson",
@@ -166,9 +168,8 @@ export function addStage0(
       source: plannedSource,
       polygon: {
         color: PLANNED.color,
-        // 楕円体高。底面と天面の両方を明示する。
-        height: baseZ,
-        extrudedHeight: baseZ + PLANNED.heightM,
+        height: baseZ, // 底面の楕円体高
+        extrudedHeight: PLANNED.heightM, // 底面からの高さ[m]
         perPositionHeight: false,
         // 地面に貼り付けない。貼り付けると押し出しの底が地形に潰される。
         clampToGround: false,
