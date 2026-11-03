@@ -797,27 +797,30 @@ export async function runSampleMode(
       const lookHeight =
         sample.volume.base_z_m + Math.max(sample.volume.display_height_m, 8) * 0.5;
       const orbitStart = { distance: 130, pitch: -24, heading: 25 };
-      const flight = view.flyTo(
-        {
-          lng: center.lng,
-          lat: center.lat,
-          height: lookHeight,
-          ...orbitStart,
-        },
-        { duration: options.fast ? 0.1 : 1.6 },
-      );
-      // 寄り終えてから旋回を始める（飛行中に setCamera を呼ぶと飛行が切れるため）。
-      // fast / reduced-motion のときは回さない（計測用・動きを嫌う設定）。
+      const oblique = {
+        lng: center.lng,
+        lat: center.lat,
+        height: lookHeight,
+        ...orbitStart,
+      };
+      const orbitCenter = { lng: center.lng, lat: center.lat, height: lookHeight };
+      // fast / reduced-motion 以外は「真上からズーム → 斜めに傾けながら旋回開始」。
       if (!options.fast && !prefersReducedMotion) {
-        void flight.then((arrived) => {
-          if (arrived && token === running && sample.volume) {
-            orbit = startOrbit(
-              view,
-              { lng: center.lng, lat: center.lat, height: lookHeight },
-              orbitStart,
-            );
-          }
+        // 1) まず敷地の真上に寄る（見下ろし）。
+        const topDown = { ...oblique, distance: 150, pitch: -89 };
+        void view.flyTo(topDown, { duration: 1.2 }).then((ok) => {
+          if (!ok || token !== running || !sample.volume) return;
+          // 2) 斜めに傾けながら降り、着いたら旋回を始める
+          //    （飛行中に setCamera を呼ぶと飛行が切れるので、着いてから回す）。
+          void view.flyTo(oblique, { duration: 1.6 }).then((ok2) => {
+            if (ok2 && token === running && sample.volume) {
+              orbit = startOrbit(view, orbitCenter, orbitStart);
+            }
+          });
         });
+      } else {
+        // 計測/動きを嫌う設定: 斜めの定点へ一気に寄るだけ。
+        void view.flyTo(oblique, { duration: options.fast ? 0.1 : 1.0 });
       }
     }
 
