@@ -810,11 +810,12 @@ export async function runSampleMode(
         //    取りきれない（斜めになる）ので、setCamera を1フレームずつ動かして
         //    自前で降ろす。カメラは敷地の真上、height はカメラの高度[m]。
         void (async () => {
-          const fromAlt = 600; // 真上・高いところから
-          const toAlt = 280; // 真上のまま降りる
+          const fromAlt = 420; // 真上・高いところから
+          const toAlt = 230; // 真上のまま降りる
           // 注: pitch -90 の見下ろしは `roll:0` を付けないと斜めになる（flyTo も
           // pitch -90 を取りきれない）。setCamera を1フレームずつ動かして降ろす。
-          await animate(2000, (t) => {
+          // 速すぎるとタイルの読み込みが追いつかないので、ゆっくり降ろす。
+          await animate(2600, (t) => {
             const eased = 1 - Math.pow(1 - t, 2); // easeOutQuad
             view.setCamera({
               lng: center.lng,
@@ -826,7 +827,7 @@ export async function runSampleMode(
             });
           });
           if (token !== running || !sample.volume) return;
-          await sleep(350); // 真上で少し止める
+          await sleep(500); // 真上で少し止める（タイルが出そろう間）
           if (token !== running || !sample.volume) return;
           // 2) 降りながら斜めに傾け、着いたら旋回を始める。
           const arrived = await view.flyTo(oblique, { duration: 1.8 });
