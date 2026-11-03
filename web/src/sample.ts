@@ -796,7 +796,16 @@ export async function runSampleMode(
       // （地面＋半分くらい）にして、建物が画面の中央に来るようにする。
       const lookHeight =
         sample.volume.base_z_m + Math.max(sample.volume.display_height_m, 8) * 0.5;
-      const orbitStart = { distance: 130, pitch: -24, heading: 25 };
+      // 旋回の開始を、新しい建物の**面を正面に**見る向きにそろえる（角からではなく
+      // 面から回り込む）。建物の輪郭の最初の辺の向きから、面に正対する方位を出す。
+      const ring = sample.volume.footprint;
+      const mLat = 111132.92;
+      const mLon = 111412.84 * Math.cos((center.lat * Math.PI) / 180);
+      const dE = (ring[1][0] - ring[0][0]) * mLon;
+      const dN = (ring[1][1] - ring[0][1]) * mLat;
+      const faceHeading =
+        (((Math.atan2(dE, dN) * 180) / Math.PI + 90) % 360 + 360) % 360;
+      const orbitStart = { distance: 130, pitch: -24, heading: faceHeading };
       const oblique = {
         lng: center.lng,
         lat: center.lat,
@@ -822,7 +831,7 @@ export async function runSampleMode(
               lat: center.lat,
               height: lookHeight + fromAlt + (toAlt - fromAlt) * eased,
               pitch: -90,
-              heading: 25,
+              heading: faceHeading,
               roll: 0,
             });
           });
