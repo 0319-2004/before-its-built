@@ -68,6 +68,15 @@ type Volume = {
   existing?: Existing | null;
 };
 
+/** 3D Tiles の地物を gml_id ごとに評価してスタイル（color/show/opacity 等）を返す。
+ *  stage0.ts と同じ仕組み。`show:false` で PLATEAU の建物を1棟だけ消せる。 */
+type TileEvaluator = {
+  evaluate: (
+    f: (info: { properties?: Record<string, unknown> }) => Record<string, unknown>,
+    o?: { filters?: string[] },
+  ) => void;
+};
+
 type Sample = {
   id: string;
   label: string;
@@ -374,6 +383,10 @@ export async function runSampleMode(
     freecam?: boolean;
     /** 立ち上がった建物に日影（冬至・地上1.5m）を付ける。dev-policy §10。 */
     shadow?: boolean;
+    /** 公式3D Tiles のレイヤ。置き換わるアニメで既存建物（gml_id）を隠すのに使う。 */
+    tilesLayer?: {
+      on: (event: string, cb: (e: { evaluator: TileEvaluator }) => void) => void;
+    };
   } = {},
 ): Promise<SampleDiag> {
   const url = options.url ?? SAMPLES_URL;
@@ -495,15 +508,48 @@ export async function runSampleMode(
   let existingLayer: Layer | null = null;
   let shadowStudy: ShadowStudy | null = null;
   let orbit: Orbit | null = null;
-  // トグル用: 今の件のボリュームと、青を立て直す/消すための手がかり。
+  // トグル用: 今の件のボリュームを覚えておき、青を出し直せるようにする。
   let currentVolume: Volume | null = null;
-  let plateauLayer: Layer | null = null; // 「PLATEAUのまま」で出す既存建物のオレンジ
   let toggleMode: "updated" | "plateau" = "updated";
   const toggleWrap = el("div", "toggle");
   toggleWrap.style.display = "none";
   const prefersReducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
   ).matches;
+
+  // --- PLATEAU の既存建物を gml_id で消す/戻す（置き換わるアニメ用） ---
+  // 公式3D Tiles は1棟だけ `show:false` にできる（stage0 と同じ評価の仕組み）。
+  // これで「古い建物そのもの」を消し、同じ場所に沈むオレンジの箱を出せる。
+  let latestEvaluator: TileEvaluator | null = null;
+  let hiddenGmlId: string | null = null; // 今消している既存建物
+  let restoreGmlId: string | null = null; // 件が替わったとき戻すべき直前の建物
+  const applyTileVisibility = () => {
+    latestEvaluator?.evaluate(
+      ({ properties }) => {
+        const id = properties?.["gml_id"];
+        if (typeof id !== "string") return {};
+        if (id === hiddenGmlId) return { show: false };
+        if (id === restoreGmlId) return { show: true }; // 消していたのを戻す
+        return {};
+      },
+      { filters: ["gml_id"] },
+    );
+  };
+  options.tilesLayer?.on("featureCreated", ({ evaluator }) => {
+    latestEvaluator = evaluator;
+    applyTileVisibility(); // タイルが流れてきても消したままにする
+  });
+  options.tilesLayer?.on("featureUpdated", ({ evaluator }) => {
+    latestEvaluator = evaluator;
+    applyTileVisibility();
+  });
+  /** 既存建物を消す（null で戻す）。 */
+  const setHiddenExisting = (gmlId: string | null) => {
+    if (hiddenGmlId && hiddenGmlId !== gmlId) restoreGmlId = hiddenGmlId;
+    hiddenGmlId = gmlId;
+    applyTileVisibility();
+  };
+
   // アニメの世代。件を切り替えたら増やし、進行中の rAF に「もう別の件」と知らせる
   // （古いアニメが新しいレイヤを動かしてしまうのを防ぐ）。
   let animGen = 0;
@@ -514,9 +560,8 @@ export async function runSampleMode(
     // 置き換わるアニメの既存建物（オレンジ）も片付ける。
     existingLayer?.delete();
     existingLayer = null;
-    // トグルで出した「PLATEAUのまま」のオレンジも片付け、トグルを隠す。
-    plateauLayer?.delete();
-    plateauLayer = null;
+    // 消していた PLATEAU の本物の建物を戻し、トグルを隠す。
+    setHiddenExisting(null);
     currentVolume = null;
     toggleMode = "updated";
     toggleWrap.style.display = "none";
@@ -574,24 +619,7 @@ export async function runSampleMode(
     } as any);
   }
 
-  /** 「PLATEAUのまま」で見せる既存建物（オレンジ・実高さ・静止）。 */
-  function makePlateauExisting(volume: Volume): Layer {
-    const h = Math.max(volume.existing?.height_m ?? 6, 5);
-    const source = geojsonSource(volume.footprint);
-    return view.addLayer({
-      type: "vector",
-      source,
-      polygon: {
-        color: ORANGE, height: volume.base_z_m, extrudedHeight: h,
-        perPositionHeight: false, clampToGround: false,
-        castShadow: true, receiveShadow: true,
-        outlineShow: true, outlineColor: ORANGE_LIGHT, opacity: 0.95,
-        emissiveColor: ORANGE, emissiveIntensity: 0.25,
-      },
-    } as any);
-  }
-
-  /** PLATEAUのまま（青なし＝既存をオレンジで）⇄ 看板で更新した街（青）。 */
+  /** PLATEAUのまま（本物の既存建物を戻す・青なし）⇄ 看板で更新した街（本物を消して青）。 */
   function applyToggle(mode: "updated" | "plateau") {
     toggleMode = mode;
     for (const btn of toggleWrap.querySelectorAll<HTMLElement>("button")) {
@@ -599,15 +627,14 @@ export async function runSampleMode(
     }
     if (!currentVolume) return;
     if (mode === "plateau") {
+      // 青を消し、PLATEAU の本物の建物を元どおり表示する。
       buildingLayer?.delete();
       buildingLayer = null;
-      if (currentVolume.existing && !plateauLayer) {
-        plateauLayer = makePlateauExisting(currentVolume);
-      }
+      setHiddenExisting(null);
       setTimelinePhase(0);
     } else {
-      plateauLayer?.delete();
-      plateauLayer = null;
+      // 本物の建物を消し、青い計画建物を出す。
+      setHiddenExisting(currentVolume.existing?.gml_id ?? null);
       if (!buildingLayer) buildingLayer = makeBluePlanned(currentVolume);
       setTimelinePhase(2);
     }
@@ -629,21 +656,18 @@ export async function runSampleMode(
   }
 
   /**
-   * 置き換わるアニメの前半: 敷地の PLATEAU（2021年調査）の建物をオレンジで見せ、
-   * **地面に沈めながら薄くして消す**（解体。dev-policy §10、UIの決定どおり）。
-   * PLATEAU の 3D Tiles 側の建物は消せないので、沈む途中で下から少し見えるが、
-   * それは「PLATEAUのまま」の姿で、これ自体が「数年遅れる」課題の実例（§15）。
+   * 置き換わるアニメの前半: **PLATEAUの古い建物そのもの**をオレンジにして沈めて消す。
+   *
+   * PLATEAU の 3D Tiles はタイルの地物なので動かせない（沈められない）。そこで
+   * 既存建物の実輪郭に合わせたオレンジの箱を重ねて用意し、箱が見えるようになったら
+   * **本物の建物を `gml_id` で `show:false` にして消す**（灰色→オレンジに切り替わる）。
+   * あとはオレンジの箱を地面へ沈めて消す。本物は消えているので下から灰色は出ない。
    */
-  async function demolishExisting(existing: Existing, volume: Volume): Promise<void> {
-    if (existing.height_m == null) return;
-    // 既存建物（PLATEAU 2021）を敷地に**オレンジの箱**で表し、沈めて消す。
-    // 位置・形は計画建物と同じ正方形（敷地の代表点）に置く。PLATEAU の実輪郭の
-    // 場所は周りの背の高い建物に隠れて見えないことが多く、同じ敷地に重ねるほうが
-    // 「古い建物が沈んで新しい建物が建つ」という置き換わりがはっきり見えるため。
-    // 高さは既存建物の実際の高さ（短い）。新しい青はこの上に、本来の高さで建つ。
-    const baseZ = volume.base_z_m;
+  async function demolishExisting(existing: Existing): Promise<void> {
+    if (existing.height_m == null || existing.base_z_m == null) return;
+    const baseZ = existing.base_z_m;
     const extrudeM = Math.max(existing.height_m, 5);
-    const source = geojsonSource(volume.footprint);
+    const source = geojsonSource(existing.footprint); // 本物の建物の実輪郭
     // height = 底面の楕円体高。下げると箱ごと地中に沈む。
     const describe = (sinkM: number, opacity: number) =>
       ({
@@ -661,19 +685,21 @@ export async function runSampleMode(
           outlineColor: ORANGE_LIGHT,
           opacity,
           emissiveColor: ORANGE,
-          emissiveIntensity: 0.25,
+          emissiveIntensity: 0.3,
         },
       }) as any;
 
+    // 1) 本物の建物に重ねてオレンジの箱を用意（まだ本物の灰色が手前に見える）。
     existingLayer = view.addLayer(describe(0, 0.95));
     setTimelinePhase(0); // 帯: PLATEAU（2021年調査）を強調
-    // NAVARA のベクタレイヤは追加から表示まで1〜2秒かかるので、沈める前に
-    // しっかり見える時間を取る（短いと描画される前に沈んで見えないまま消える）。
+    // NAVARA のベクタレイヤは追加から表示まで1〜2秒かかるので、切り替える前に待つ。
     await sleep(EXISTING_HOLD_MS);
+    // 2) 本物の PLATEAU 建物を消す → 用意しておいたオレンジが現れる（灰→オレンジ）。
+    setHiddenExisting(existing.gml_id);
     setTimelinePhase(1); // 帯: 現地（看板）を強調しながら沈める
-    // 自分の高さ＋少し余分に沈めて地中へ。最後に速く沈む（easeInQuad）。
+    // 3) オレンジを地面へ沈めて消す。本物は消えているので下から灰色は出ない。
     await animate(SINK_MS, (t) => {
-      const sink = (extrudeM + 1) * (t * t);
+      const sink = (extrudeM + 2) * (t * t);
       existingLayer?.update(describe(sink, Math.max(0, 0.95 * (1 - t))));
     });
     existingLayer?.delete();
@@ -714,15 +740,19 @@ export async function runSampleMode(
       toggleWrap.style.display = volume.existing ? "" : "none";
     };
     if (options.fast) {
-      // 計測・審査用の一発表示。最初から本来の高さで立てる。
+      // 計測・審査用の一発表示。本物の既存建物は消して、青を本来の高さで立てる。
+      if (volume.existing) setHiddenExisting(volume.existing.gml_id);
       buildingLayer = view.addLayer(describe(hM));
       setTimelinePhase(2);
       showToggle();
       return;
     }
-    // 置き換わるアニメ: 既存建物（PLATEAU 2021）をオレンジで沈めてから青を立てる。
+    // 置き換わるアニメ: 本物の既存建物をオレンジにして沈めてから青を立てる。
     if (volume.existing && !prefersReducedMotion) {
-      await demolishExisting(volume.existing, volume);
+      await demolishExisting(volume.existing);
+    } else if (volume.existing) {
+      // 動きを嫌う設定のときはアニメなしで本物を消す。
+      setHiddenExisting(volume.existing.gml_id);
     }
     // 計画（青）の時点へ。帯も計画を強調する。
     setTimelinePhase(2);

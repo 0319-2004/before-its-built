@@ -391,6 +391,8 @@ async function main() {
   if (sampleMode) {
     try {
       const s = await runSampleMode(view, {
+        // 置き換わるアニメで PLATEAU の既存建物（gml_id）を隠すのに使う。
+        tilesLayer: tilesLayer as any,
         id: params.get("id"),
         fast: params.get("fast") === "1",
         // 計測用: URL のカメラ（?lng/lat/height/pitch/heading）をそのまま使い、

@@ -73,10 +73,13 @@ PLATEAU の3D都市モデルの上に立ち上げる。
 
 **サンプルモードは「PLATEAUと現実の差分」を見せる**（`src/sample.ts`）。エージェントの
 処理中は敷地を**旋回**（約6°/秒、画面タップで停止、`prefers-reduced-motion`/`fast`では回さない）。
-敷地にPLATEAUの建物があれば**オレンジで出して沈め、青い計画建物を立てる**。
-NAVARAのベクタレイヤは追加〜表示に**約2秒**かかるので、沈める前の保持時間
-（`EXISTING_HOLD_MS`）を長めに取る（短いと描画前に沈んで見えない）。既存の実輪郭は
-背の高い隣に隠れやすいので、オレンジは敷地の正方形に既存の実高さで出す。
+置き換わりアニメは**PLATEAUの古い建物そのものを消す**：公式3D Tilesは `featureUpdated`
+の評価で地物を `gml_id` ごとに `{show:false}` にでき（stage0と同じ仕組み、`ModelBatchedAttributeName`
+は `color/show/opacity/emissive/emissiveIntensity`）、既存建物1棟だけ消せる。実輪郭に重ねた
+オレンジの箱を用意→本物を `show:false` で消して灰→オレンジに切り替え→オレンジを沈めて消す
+→青い計画建物を立てる。NAVARAのベクタレイヤは追加〜表示に**約2秒**かかるので、切り替える前の
+保持時間（`EXISTING_HOLD_MS`）を長めに取る。トグルは本物の建物を戻す/消すで切り替える。
+件を替えたら消した建物を必ず戻す（`setHiddenExisting(null)`）。
 
 **`web/`** — NAVARA (`@navaramap/three`) + PLATEAU公式配信の3D Tiles。
 ブラウザで表示確認済み（`npm run dev`）。
