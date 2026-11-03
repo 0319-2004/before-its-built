@@ -792,12 +792,16 @@ export async function runSampleMode(
     // 段階1と同じ視点で撮り比べて縦横比を測るための計測用の抜け道。
     if (sample.volume && !options.freecam) {
       const center = centroid(sample.volume.footprint);
-      const orbitStart = { distance: 260, pitch: -22, heading: 25 };
+      // 建物を探さずに済むよう、しっかり寄る。注視点は建物の中ほどの高さ
+      // （地面＋半分くらい）にして、建物が画面の中央に来るようにする。
+      const lookHeight =
+        sample.volume.base_z_m + Math.max(sample.volume.display_height_m, 8) * 0.5;
+      const orbitStart = { distance: 130, pitch: -24, heading: 25 };
       const flight = view.flyTo(
         {
           lng: center.lng,
           lat: center.lat,
-          height: sample.volume.base_z_m,
+          height: lookHeight,
           ...orbitStart,
         },
         { duration: options.fast ? 0.1 : 1.6 },
@@ -809,7 +813,7 @@ export async function runSampleMode(
           if (arrived && token === running && sample.volume) {
             orbit = startOrbit(
               view,
-              { lng: center.lng, lat: center.lat, height: sample.volume.base_z_m },
+              { lng: center.lng, lat: center.lat, height: lookHeight },
               orbitStart,
             );
           }
