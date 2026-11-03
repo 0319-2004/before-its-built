@@ -804,20 +804,36 @@ export async function runSampleMode(
         ...orbitStart,
       };
       const orbitCenter = { lng: center.lng, lat: center.lat, height: lookHeight };
-      // fast / reduced-motion 以外は「真上からズーム → 斜めに傾けながら旋回開始」。
+      // fast / reduced-motion 以外は「高い真上からズーム → 降りて傾けて旋回開始」。
       if (!options.fast && !prefersReducedMotion) {
-        // 1) まず敷地の真上に寄る（見下ろし）。
-        const topDown = { ...oblique, distance: 150, pitch: -89 };
-        void view.flyTo(topDown, { duration: 1.2 }).then((ok) => {
-          if (!ok || token !== running || !sample.volume) return;
-          // 2) 斜めに傾けながら降り、着いたら旋回を始める
-          //    （飛行中に setCamera を呼ぶと飛行が切れるので、着いてから回す）。
-          void view.flyTo(oblique, { duration: 1.6 }).then((ok2) => {
-            if (ok2 && token === running && sample.volume) {
-              orbit = startOrbit(view, orbitCenter, orbitStart);
-            }
+        // 1) 高い真上（pitch -90 の見下ろし）からズームイン。flyTo は pitch -90 を
+        //    取りきれない（斜めになる）ので、setCamera を1フレームずつ動かして
+        //    自前で降ろす。カメラは敷地の真上、height はカメラの高度[m]。
+        void (async () => {
+          const fromAlt = 600; // 真上・高いところから
+          const toAlt = 280; // 真上のまま降りる
+          // 注: pitch -90 の見下ろしは `roll:0` を付けないと斜めになる（flyTo も
+          // pitch -90 を取りきれない）。setCamera を1フレームずつ動かして降ろす。
+          await animate(2000, (t) => {
+            const eased = 1 - Math.pow(1 - t, 2); // easeOutQuad
+            view.setCamera({
+              lng: center.lng,
+              lat: center.lat,
+              height: lookHeight + fromAlt + (toAlt - fromAlt) * eased,
+              pitch: -90,
+              heading: 25,
+              roll: 0,
+            });
           });
-        });
+          if (token !== running || !sample.volume) return;
+          await sleep(350); // 真上で少し止める
+          if (token !== running || !sample.volume) return;
+          // 2) 降りながら斜めに傾け、着いたら旋回を始める。
+          const arrived = await view.flyTo(oblique, { duration: 1.8 });
+          if (arrived && token === running && sample.volume) {
+            orbit = startOrbit(view, orbitCenter, orbitStart);
+          }
+        })();
       } else {
         // 計測/動きを嫌う設定: 斜めの定点へ一気に寄るだけ。
         void view.flyTo(oblique, { duration: options.fast ? 0.1 : 1.0 });
