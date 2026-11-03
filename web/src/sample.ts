@@ -243,8 +243,25 @@ const CSS = `
 #sample .timeline .when .dot.blue { background: #2d7dff; }
 #sample .timeline .what { margin-top: 3px; font-size: 12px; color: #eef1f6; font-weight: 600; }
 #sample .timeline .arrow { align-self: center; color: #5c6782; font-size: 13px; padding: 0 1px; }
+/* 「PLATEAUのまま ⇄ 看板で更新した街」の切り替え。差分をその場で比べる。 */
+#sample .toggle {
+  position: absolute; bottom: 16px; left: calc(50% + 215px);
+  transform: translateX(-50%); pointer-events: auto;
+  display: inline-flex; padding: 4px; gap: 3px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(8,10,14,0.86);
+  backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+#sample .toggle button {
+  appearance: none; cursor: pointer; border: 0; border-radius: 999px;
+  padding: 7px 14px; font: inherit; font-size: 12px; font-weight: 600;
+  background: transparent; color: #c2cad6;
+}
+#sample .toggle button[aria-pressed="true"] { color: #06101f; }
+#sample .toggle button.plateau[aria-pressed="true"] { background: linear-gradient(180deg,#ffb366,#ff8c1a); }
+#sample .toggle button.updated[aria-pressed="true"] { background: linear-gradient(180deg,#8fc0ff,#2d7dff); }
 @media (max-width: 860px) {
   #sample .timeline { display: none; } /* 狭い画面ではパネルと干渉するので隠す */
+  #sample .toggle { left: 50%; bottom: 10px; }
 }
 @media (max-width: 560px) {
   #sample { justify-content: flex-end; }
@@ -478,6 +495,12 @@ export async function runSampleMode(
   let existingLayer: Layer | null = null;
   let shadowStudy: ShadowStudy | null = null;
   let orbit: Orbit | null = null;
+  // トグル用: 今の件のボリュームと、青を立て直す/消すための手がかり。
+  let currentVolume: Volume | null = null;
+  let plateauLayer: Layer | null = null; // 「PLATEAUのまま」で出す既存建物のオレンジ
+  let toggleMode: "updated" | "plateau" = "updated";
+  const toggleWrap = el("div", "toggle");
+  toggleWrap.style.display = "none";
   const prefersReducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
   ).matches;
@@ -491,6 +514,12 @@ export async function runSampleMode(
     // 置き換わるアニメの既存建物（オレンジ）も片付ける。
     existingLayer?.delete();
     existingLayer = null;
+    // トグルで出した「PLATEAUのまま」のオレンジも片付け、トグルを隠す。
+    plateauLayer?.delete();
+    plateauLayer = null;
+    currentVolume = null;
+    toggleMode = "updated";
+    toggleWrap.style.display = "none";
     // 旋回も止める（件を切り替えたら前の旋回は残さない）。
     orbit?.stop();
     orbit = null;
@@ -527,6 +556,76 @@ export async function runSampleMode(
         }],
       },
     });
+  }
+
+  /** 計画建物（青）を本来の高さで立てる（トグルで出し直すとき用。アニメなし）。 */
+  function makeBluePlanned(volume: Volume): Layer {
+    const source = geojsonSource(volume.footprint);
+    return view.addLayer({
+      type: "vector",
+      source,
+      polygon: {
+        color: BLUE, height: volume.base_z_m, extrudedHeight: volume.display_height_m,
+        perPositionHeight: false, clampToGround: false,
+        castShadow: true, receiveShadow: true,
+        outlineShow: true, outlineColor: BLUE_LIGHT, opacity: 0.95,
+        emissiveColor: BLUE, emissiveIntensity: 0.22,
+      },
+    } as any);
+  }
+
+  /** 「PLATEAUのまま」で見せる既存建物（オレンジ・実高さ・静止）。 */
+  function makePlateauExisting(volume: Volume): Layer {
+    const h = Math.max(volume.existing?.height_m ?? 6, 5);
+    const source = geojsonSource(volume.footprint);
+    return view.addLayer({
+      type: "vector",
+      source,
+      polygon: {
+        color: ORANGE, height: volume.base_z_m, extrudedHeight: h,
+        perPositionHeight: false, clampToGround: false,
+        castShadow: true, receiveShadow: true,
+        outlineShow: true, outlineColor: ORANGE_LIGHT, opacity: 0.95,
+        emissiveColor: ORANGE, emissiveIntensity: 0.25,
+      },
+    } as any);
+  }
+
+  /** PLATEAUのまま（青なし＝既存をオレンジで）⇄ 看板で更新した街（青）。 */
+  function applyToggle(mode: "updated" | "plateau") {
+    toggleMode = mode;
+    for (const btn of toggleWrap.querySelectorAll<HTMLElement>("button")) {
+      btn.setAttribute("aria-pressed", String(btn.dataset.mode === mode));
+    }
+    if (!currentVolume) return;
+    if (mode === "plateau") {
+      buildingLayer?.delete();
+      buildingLayer = null;
+      if (currentVolume.existing && !plateauLayer) {
+        plateauLayer = makePlateauExisting(currentVolume);
+      }
+      setTimelinePhase(0);
+    } else {
+      plateauLayer?.delete();
+      plateauLayer = null;
+      if (!buildingLayer) buildingLayer = makeBluePlanned(currentVolume);
+      setTimelinePhase(2);
+    }
+  }
+
+  // トグルのボタンを組む（押せるのは建物が立ってから）。
+  root.appendChild(toggleWrap);
+  for (const [mode, label] of [
+    ["plateau", "PLATEAUのまま"],
+    ["updated", "看板で更新した街"],
+  ] as const) {
+    const btn = el("button", mode);
+    btn.type = "button";
+    btn.dataset.mode = mode;
+    btn.textContent = label;
+    btn.setAttribute("aria-pressed", String(mode === "updated"));
+    btn.addEventListener("click", () => applyToggle(mode));
+    toggleWrap.appendChild(btn);
   }
 
   /**
@@ -583,6 +682,7 @@ export async function runSampleMode(
 
   /** 建物を 0 から本来の高さまで立ち上げる（必要なら先に既存建物を解体する）。 */
   async function raise(volume: Volume) {
+    currentVolume = volume; // トグルで出し直せるように覚えておく
     const source = geojsonSource(volume.footprint);
     // `extrudedHeight` は**底面からの相対の押し出し量**（NAVARA の仕様。
     // 「Extrusion height for polygons in meters」。絶対の天面高ではない）。
@@ -609,9 +709,15 @@ export async function runSampleMode(
       }) as any;
 
     const hM = volume.display_height_m;
+    // 建物が立ったら「PLATEAUのまま⇄看板で更新した街」のトグルを押せるようにする。
+    const showToggle = () => {
+      toggleWrap.style.display = volume.existing ? "" : "none";
+    };
     if (options.fast) {
       // 計測・審査用の一発表示。最初から本来の高さで立てる。
       buildingLayer = view.addLayer(describe(hM));
+      setTimelinePhase(2);
+      showToggle();
       return;
     }
     // 置き換わるアニメ: 既存建物（PLATEAU 2021）をオレンジで沈めてから青を立てる。
@@ -627,6 +733,7 @@ export async function runSampleMode(
       const eased = 1 - Math.pow(1 - t, 3);
       buildingLayer?.update(describe(Math.max(0.05, hM * eased)));
     });
+    showToggle();
   }
 
   // --- 1件を流す ---
