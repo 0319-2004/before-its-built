@@ -41,8 +41,21 @@ SUMMARY_MD = Path("docs/eval-summary.md")
 
 MATCH, MISMATCH = "一致", "不一致"
 BOTH_ABSENT, ONLY_BOARD, ONLY_FILING = "両方なし", "看板だけ", "届出だけ"
-# 不一致を2つに分ける：読み間違いの候補と、看板と届出が実際に食い違っていたもの。
+# 不一致を3つに分ける：
+#   MISREAD        … 看板の読み間違いの候補
+#   DECLARED       … 看板と届出が実際に食い違っていた（どちらが正しいか未決）
+#   LIKELY_FILING  … 看板が複数そろって一致し、届出側の読み取りの誤りが疑われる（確認待ち）
 MISREAD, DECLARED = "読み間違い", "実際の食い違い"
+LIKELY_FILING = "届出の誤りの可能性"
+
+# 複数の看板写真がそろって一致し、**届出の読み取りの誤り**が疑われる (届出No., 項目)。
+# 目視確認（verify.html）が取れるまでは「実際の食い違い」とは別に数える（dev-policy §6・§7）。
+# 看板側は複数枚で裏が取れているので、看板の読み間違いにも数えない。
+LIKELY_FILING_MISREAD = {
+    ("60", "address.block"):
+        "看板3枚（IMG_3989/3990/3993）がそろって街区「1番」。届出の読み取りは「19番」。"
+        "届出スキャンの目視確認で確定予定（取れるまでは暫定）。",
+}
 
 # エージェントの4つの終わり方（dev-policy §3）。
 OUTCOME_LABELS = {
@@ -217,11 +230,13 @@ def compare_photo(result: dict, row: dict) -> list[dict]:
     return comparisons
 
 
-def bucket(outcome: str, declared: bool) -> str:
-    """不一致を、読み間違い候補と「実際の食い違い」に振り分ける。"""
-    if outcome == MISMATCH:
+def bucket(comparison: dict, declared: bool, filing_no) -> str:
+    """不一致を、読み間違い候補／実際の食い違い／届出の誤りの可能性に振り分ける。"""
+    if comparison["outcome"] == MISMATCH:
+        if (str(filing_no), comparison["field"]) in LIKELY_FILING_MISREAD:
+            return LIKELY_FILING
         return DECLARED if declared else MISREAD
-    return outcome
+    return comparison["outcome"]
 
 
 def aggregate(photos: list[dict]) -> dict:
@@ -236,8 +251,9 @@ def aggregate(photos: list[dict]) -> dict:
     filing_uncertain_on_mismatch = 0
     for photo in photos:
         declared = photo.get("declared", False)
+        filing_no = photo.get("filing_no")
         for c in photo["comparisons"]:
-            b = bucket(c["outcome"], declared)
+            b = bucket(c, declared, filing_no)
             by_field[c["field"]][b] += 1
             totals[b] += 1
             # 確信度の当てになり方は「読み間違い」だけで見る。実際の食い違いは
@@ -273,14 +289,15 @@ def percent(value) -> str:
 # ---------- 出力 ----------
 
 def field_table(summary: dict) -> list[str]:
-    lines = ["| 項目 | 比べられた | 一致 | 読み間違い | 実際の食い違い | 一致率 | 看板だけ | 届出だけ | 両方なし |",
-             "|---|---|---|---|---|---|---|---|---|"]
+    lines = ["| 項目 | 比べられた | 一致 | 読み間違い | 実際の食い違い | 届出の誤り(疑) | 一致率 | 看板だけ | 届出だけ | 両方なし |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
 
     def row(label, c, bold=False):
         comparable = c.get(MATCH, 0) + c.get(MISREAD, 0)
         b = "**" if bold else ""
         return (f"| {b}{label}{b} | {b}{comparable}{b} | {b}{c.get(MATCH, 0)}{b} | "
-                f"{c.get(MISREAD, 0)} | {c.get(DECLARED, 0)} | {b}{percent(rate(c))}{b} | "
+                f"{c.get(MISREAD, 0)} | {c.get(DECLARED, 0)} | {c.get(LIKELY_FILING, 0)} | "
+                f"{b}{percent(rate(c))}{b} | "
                 f"{c.get(ONLY_BOARD, 0)} | {c.get(ONLY_FILING, 0)} | {c.get(BOTH_ABSENT, 0)} |")
 
     for name, label, _, _ in FIELD_SPECS:
@@ -312,19 +329,40 @@ def outcomes_table(photos: list[dict]) -> list[str]:
 
 
 def declared_lines(matched: list[dict]) -> list[str]:
-    """看板と届出が実際に食い違った項目を、数値だけで並べる（名称は出さない）。"""
+    """看板と届出が実際に食い違った項目を、数値だけで並べる（名称は出さない）。
+
+    届出の読み取りの誤りが疑われるもの（LIKELY_FILING_MISREAD）はここには出さず、
+    別の節（likely_filing_lines）に分ける。
+    """
     out = []
     for m in matched:
         if not m.get("declared"):
             continue
         for c in m["comparisons"]:
-            # 建築物の名称は公開する md に出さない（個人名が入りうる）
-            if c["outcome"] == MISMATCH and c["field"] != "building_name":
+            if c["outcome"] != MISMATCH or c["field"] == "building_name":
+                continue  # 建築物の名称は公開する md に出さない（個人名が入りうる）
+            if (str(m["filing_no"]), c["field"]) in LIKELY_FILING_MISREAD:
+                continue  # 届出の誤りの可能性は別の節へ
+            out.append(
+                f"- {m['photo']}（No.{m['filing_no']}）{c['label']}："
+                f"看板 {c['board']} / 届出 {c['filing']}"
+                "。読み直しても一致せず `mismatch_notified` で終了。")
+    return out or ["なし（この回では実際の食い違いは出なかった）。"]
+
+
+def likely_filing_lines(matched: list[dict]) -> list[str]:
+    """届出の読み取りの誤りが疑われる項目（看板が複数そろって一致・確認待ち）。"""
+    out = []
+    for m in matched:
+        for c in m["comparisons"]:
+            if c["field"] == "building_name":
+                continue
+            key = (str(m["filing_no"]), c["field"])
+            if c["outcome"] == MISMATCH and key in LIKELY_FILING_MISREAD:
                 out.append(
                     f"- {m['photo']}（No.{m['filing_no']}）{c['label']}："
-                    f"看板 {c['board']} / 届出 {c['filing']}"
-                    "。読み直しても一致せず `mismatch_notified` で終了。")
-    return out or ["なし（この回では実際の食い違いは出なかった）。"]
+                    f"看板 {c['board']} / 届出 {c['filing']}。{LIKELY_FILING_MISREAD[key]}")
+    return out or ["なし。"]
 
 
 def write_markdown(report: dict):
@@ -390,6 +428,14 @@ def write_markdown(report: dict):
         "",
     ] + declared_lines(report["matched"]) + [
         "",
+        "## 届出の読み取りの誤りが疑われる項目（看板が複数そろって一致・確認待ち）",
+        "",
+        "複数の看板写真がそろって同じ値を読み、**届出側の読み取り**の誤りが疑われるもの。",
+        "看板は複数枚で裏が取れているので看板の読み間違いには数えず、「実際の食い違い」とも",
+        "別に数える。**届出スキャンの目視確認（verify.html）が取れるまでは暫定**。",
+        "",
+    ] + likely_filing_lines(report["matched"]) + [
+        "",
         "## 確信度の当てになり方",
         "",
         "看板を読んだモデルの自己申告の確信度と、**読み間違い**の重なり"
@@ -432,6 +478,9 @@ def write_markdown(report: dict):
         "「3D表示に使う高さ」（最高の高さがあればそれ、なければ高さ）で別に見る",
         f"- 「自信なし」は確信度 < {LOW_CONFIDENCE}、または状態が `unreadable`・`masked` の項目",
         f"- `mismatch_notified` で終えた写真の不一致は「実際の食い違い」として別に数える",
+        "- 複数の看板がそろって一致し、届出側の読み取りの誤りが疑われるものは"
+        "「届出の誤り(疑)」として別に数える（看板の読み間違いにも実際の食い違いにも入れない）。"
+        "目視確認で確定するまでは暫定",
         "",
     ]
     SUMMARY_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")

@@ -33,6 +33,8 @@ import evaluate
 import make_planned_geojson as volume
 import normalize
 import read_board
+import site_state
+from pair_photos import read_exif
 from read_board import client
 
 MODEL = "muse-spark-1.3"  # -contributor は使わない（写真に個人名が写る。dev-policy §3）
@@ -83,6 +85,9 @@ request_retake で終えてください。
   当たりやすい（地番は看板の読み間違いに強い）。
 - 3D表示に使う高さは max_height_m（なければ height_m）です。eave_height_m（軒高）は
   使いません。
+- 遠い敷地写真も渡されているときは、check_site で敷地の現況（建物あり／更地／工事中）を
+  確かめられる。PLATEAU の2021年の建物と食い違う（PLATEAUには建物があるのに現地が更地・工事中）
+  ときは、その旨を finish の unresolved に入れて利用者に知らせる（3D都市モデルの未反映）。
 - 建築主・設計者・施工者・担当者の氏名、住所、電話番号は一切書かない。
 - 理由は日本語で短く。
 
@@ -118,7 +123,9 @@ TOOLS = [
         "name": "reread_fields",
         "description": "指定した項目だけを、推論の強さ medium で読み直す。"
                        "読み直した値で読み取り結果を差し替え、変わった項目を返す。"
-                       "矛盾が見つかった項目や、届出と食い違った項目に使う。",
+                       "矛盾が見つかった項目や、届出と食い違った項目に使う。"
+                       "通常の項目のほか、住居表示は \"address\"、地名地番は \"lot\" で読み直せる"
+                       "（街区番号などが届出と食い違ったとき）。",
         "parameters": {
             "type": "object",
             "properties": {
@@ -175,6 +182,16 @@ TOOLS = [
             },
             "required": ["building_area_m2", "height_m"],
         },
+    },
+    {
+        "type": "function",
+        "name": "check_site",
+        "description": "遠い敷地写真から、敷地が今「建物あり／更地／工事中」かを判定し、"
+                       "PLATEAU の2021年の建物と突き合わせる。PLATEAU に建物があるのに現地が"
+                       "更地・工事中なら『PLATEAU未反映』（3D都市モデルの数年遅れ）と返す。"
+                       "遠い敷地写真が渡されているときに使う。位置は geocode 済みなら街区の"
+                       "代表点、なければ写真の撮影GPSを使う。",
+        "parameters": {"type": "object", "properties": {}, "required": []},
     },
     {
         "type": "function",
@@ -243,8 +260,10 @@ def ground_index():
 class Session:
     """写真1枚の処理の途中の状態と、判断の記録。"""
 
-    def __init__(self, photo: Path):
+    def __init__(self, photo: Path, far_photo: Path | None = None):
         self.photo = photo
+        self.far_photo = far_photo  # 同じ地点の遠い敷地写真（あれば）。check_site で使う
+        self.site_state: dict | None = None
         self.boards: list[Path] | None = None
         self.board_detected = False
         self.board_index: int | None = None
@@ -320,10 +339,10 @@ def tool_reread_fields(s: Session, args: dict) -> dict:
     names = [n for n in (args.get("fields") or []) if n]
     if not names:
         return {"error": "読み直す項目を fields に入れてください"}
-    unknown = [n for n in names if n not in read_board.FIELDS]
+    unknown = [n for n in names if n not in read_board.REREADABLE]
     if unknown:
         return {"error": f"読み直せない項目です: {unknown}。"
-                         f"読み直せるのは {sorted(read_board.FIELDS)}"}
+                         f"読み直せるのは {sorted(read_board.REREADABLE)}"}
 
     reason = args.get("reason") or "食い違いの確認"
     # reread は「矛盾の一覧」から項目を拾う形なので、理由をその形に包んで渡す
@@ -335,10 +354,19 @@ def tool_reread_fields(s: Session, args: dict) -> dict:
     s.reading.setdefault("rereads", []).append(done)
     issues = read_board.check_consistency(s.reading.get("fields") or {})
     s.reading["consistency_issues"] = issues
+
+    def value_of(name: str) -> dict:
+        # 住居表示・地名地番は fields ではなく別ブロックなので取り出し方を分ける
+        if name in read_board.BLOCK_LABELS:
+            block = s.reading.get(name) or {}
+            return {"value": read_board.block_summary(name, block),
+                    "status": block.get("status"), "confidence": block.get("confidence")}
+        return compact_field((s.reading.get("fields") or {}).get(name) or {})
+
     return {
         "reread": names,
         "changed": done["changed"],
-        "values": {n: compact_field((s.reading["fields"] or {}).get(n) or {}) for n in names},
+        "values": {n: value_of(n) for n in names},
         "consistency_issues": issues,
     }
 
@@ -503,6 +531,40 @@ def tool_extrude(s: Session, args: dict) -> dict:
     }
 
 
+def tool_check_site(s: Session, args: dict) -> dict:
+    image = s.far_photo or s.photo
+    photo = site_state.judge_site(image)
+
+    lat = lon = None
+    loc_src = None
+    if s.point is not None:
+        lat, lon = s.point
+        loc_src = "geocode の街区代表点"
+    else:
+        ex = read_exif(image)
+        if ex["lat"] is not None:
+            lat, lon, loc_src = ex["lat"], ex["lon"], "写真の撮影GPS"
+
+    if lat is not None:
+        plateau = site_state.plateau_state(ground_index(), lat, lon)
+    else:
+        plateau = {"has_building": None, "nearby_count": 0,
+                   "note": "位置が取れないので PLATEAU と照合できない"}
+    verdict = site_state.reconcile(photo, plateau)
+
+    s.site_state = {"image": str(image), "used_far_photo": s.far_photo is not None,
+                    "location_source": loc_src, "photo_state": photo,
+                    "plateau": plateau, "verdict": verdict}
+    return {
+        "used_far_photo": s.far_photo is not None,
+        "state": photo["state"], "state_label": photo["state_label"],
+        "confidence": photo["confidence"], "signals": photo["signals"],
+        "plateau": plateau, "verdict": verdict,
+        "note": "verdict が plateau_outdated のときは、PLATEAUに建物が残っているのに"
+                "現地は更地・工事中（3D都市モデルの未反映）。unresolved に入れて知らせてください",
+    }
+
+
 def tool_request_retake(s: Session, args: dict) -> dict:
     s.outcome = "needs_retake"
     s.summary = args.get("reason") or "撮り直してください"
@@ -524,6 +586,7 @@ HANDLERS = {
     "lookup_filing": tool_lookup_filing,
     "geocode": tool_geocode,
     "extrude": tool_extrude,
+    "check_site": tool_check_site,
     "request_retake": tool_request_retake,
     "finish": tool_finish,
 }
@@ -537,14 +600,16 @@ def item_text(item: dict) -> str | None:
     return " ".join(parts).strip() or None
 
 
-def run(photo: Path, effort: str = "low") -> dict:
-    s = Session(photo)
+def run(photo: Path, effort: str = "low", far_photo: Path | None = None) -> dict:
+    s = Session(photo, far_photo)
     started = datetime.now().astimezone()
 
+    far_note = (f"\n同じ地点の遠い敷地写真（{far_photo.name}）も渡されています。"
+                "敷地の現況を確かめたいときは check_site で使えます。" if far_photo else "")
     convo = [{"role": "user", "content":
               INSTRUCTIONS.format(outcomes="\n".join(
                   f"- {k}: {v}" for k, v in OUTCOMES.items() if k != "needs_retake"))
-              + f"\n\n処理する写真: {photo.name}"}]
+              + f"\n\n処理する写真: {photo.name}" + far_note}]
 
     pending_thought = None
     for turn in range(MAX_TURNS):
@@ -619,6 +684,8 @@ def run(photo: Path, effort: str = "low") -> dict:
         "match_key": s.match_key,
         "filing_verified": evaluate.is_verified(s.filing) if s.filing else None,
         "volume": s.volume,
+        "site_state": s.site_state,
+        "far_photo": s.far_photo.name if s.far_photo else None,
         "reading": s.reading,
         "steps": s.steps,
     }
@@ -629,6 +696,8 @@ def main():
     parser.add_argument("target", type=Path, help="写真、または --all のときはその入っているディレクトリ")
     parser.add_argument("--all", action="store_true", help="ディレクトリの写真を全部処理する")
     parser.add_argument("--effort", default="low", choices=["low", "medium", "high"])
+    parser.add_argument("--pairs", type=Path,
+                        help="pair_photos.py の出力（近い写真に同地点の遠い写真を渡す）")
     args = parser.parse_args()
 
     if args.all:
@@ -637,11 +706,22 @@ def main():
     else:
         photos = [args.target]
 
+    # 近い写真 → 同じ地点の遠い敷地写真。check_site で現況を確かめるのに使う。
+    far_of: dict[str, str] = {}
+    if args.pairs and args.pairs.exists():
+        for c in json.loads(args.pairs.read_text(encoding="utf-8")):
+            far = (c.get("far") or [None])[0]
+            if far:
+                for near in c.get("near") or []:
+                    far_of[near] = far
+
     RECORD_DIR.mkdir(parents=True, exist_ok=True)
     records = []
     for photo in photos:
         print(f"\n=== {photo.name} ===", flush=True)
-        record = run(photo, args.effort)
+        far_name = far_of.get(photo.stem)
+        far_photo = photo.parent / f"{far_name}.JPG" if far_name else None
+        record = run(photo, args.effort, far_photo)
         out = RECORD_DIR / f"{photo.stem}.json"
         out.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"  → {record['outcome']}: {record['summary']}")

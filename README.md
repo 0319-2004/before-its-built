@@ -53,31 +53,34 @@ The more we trust the model to decide, the more we pin down in code the things i
 - **It can't pass the wrong height to 3D.** `extrude()` rejects the eave height (a mistake we made once) and anything that isn't the display height.
 - **It can't "eyeball" a match.** `lookup_filing` computes field-by-field agreement with the same rules as the evaluator.
 
-### Two decisions worth watching
+### Decisions worth watching
 
 - **IMG_3928 — self-correcting a misread.** The board's address was read as "3-chōme **1**-ban", but it's "3-chōme **17**-ban" (the number was crammed into the land-number field). The agent matched the filing by **land number**, not the address, so the misread never mattered — and the filing confirms 17-ban, consistent with the building's own name.
 - **IMG_3966 — refusing to build.** The height was crushed in the photo; the model read "11.985 m" against 9 storeys with low confidence, and a re-read didn't help. Rather than invent a tidier figure (an earlier run wrote "31.985 m because it's 9 storeys" — which *passes* the numeric check), it left the value unreadable and **did not raise a building**.
+- **IMG_3997 / No.55 — catching a stale city model.** From the far site photo the agent's `check_site` tool read the lot as *under construction*, while PLATEAU (2021) still carries buildings there — so it flagged **"PLATEAU not reflected"**. This round, all **3 near/far photo pairs** came back the same way: the real site is already being built while the 3D model shows the old block.
+- **No.60 — the board correcting the filing.** Three independent photos (IMG_3989/3990/3993) all read the street block as "**1**-ban"; the filing reading says "19-ban". With three boards agreeing, the discrepancy is counted as a **likely filing-side misread** (not a sign misread, not an undecided disagreement), pending visual check of the filing scan.
 
 ## Evaluation (provisional)
 
 `pipeline/evaluate.py` scores the agent's output (`data/agent/*.json`) against Meguro City's filings. Summary: [`docs/eval-summary.md`](docs/eval-summary.md).
 
-**The filings have not yet been visually verified, so every number is provisional.** Mismatches are split so the headline isn't punished by things that aren't reading errors:
+**The filings themselves are read by the model and have not yet been visually verified, so the "match rate" below is a _model-vs-model agreement rate_, and every number is provisional.** Mismatches are split so the headline isn't punished by things that aren't reading errors:
 
-| of 8 photos | |
+| of 26 photos | |
 |---|---|
-| matched a filing and raised in 3D | 5 |
-| not a construction notice (labour-insurance / permit boards) | 2 |
-| not built — a value was unreadable and it wouldn't invent one | 1 |
+| matched a filing | 9 |
+| raised in 3D | 11 |
+| not a construction notice (labour-insurance / permit boards) | 11 |
+| not built — unreadable value, or not in the mid-rise list | 6 |
 
-On the 5 matched photos: **100 % field match, 0 misreads**, and **1 real sign-vs-filing discrepancy** (a 71.87 vs 70.32 m² site area the agent surfaced as "disagreement" rather than silently picking one). The one not-built photo (IMG_3966) is counted under "not built", not as an error.
+On the 9 matched photos: **146 / 146 field match (100 %), 0 misreads** — again, this is model-vs-model agreement until the filings are human-verified. Discrepancies are kept out of that rate and counted separately: **1 real sign-vs-filing disagreement** (a 71.87 vs 70.32 m² site area the agent surfaced rather than silently picking one) and **3 likely filing-side misreads** (the No.60 block number above). Separately, **`check_site` flagged "PLATEAU not reflected" on 3 near/far pairs** — real sites already under construction that the 2021 model still shows as standing.
 
 ### Known limits (stated honestly)
 
 - **Mid-rise only** — the input is the standard mid/high-rise notice board; buildings over 10,000 m² total floor area aren't in the city's mid-rise list.
 - **Shape is approximate** — an area-equal square facing north at the block's reference point; not yet aligned to the nearest road, and the exact spot within the block is unknown.
 - **Filings unverified** — the "ground truth" is itself a model reading until a human confirms it; numbers are provisional.
-- **Small sample so far** — 8 photos evaluated.
+- **Small sample so far** — 26 photos evaluated.
 - **Demolition is a ranked guess** — the notice gives no coordinate, so the demolished building is the top candidate in the block, shown faintly when it can't be pinned to one.
 - **PLATEAU is from 2021** — a cleared lot still shows its old building. We show this rather than hide it: it *is* the "city models go stale" problem.
 - **The shadow is a guide, not a legal ruling** — winter solstice, cuboid approximation, measured 1.5 m above ground; the UI says so.

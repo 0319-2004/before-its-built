@@ -91,8 +91,25 @@ type Sample = {
   values: Record<string, { value: unknown; status?: string; confidence?: number }>;
   steps: Step[];
   volume: Volume | null;
+  /** 遠い写真でAIが判定した敷地の現況とPLATEAU（2021）とのずれ（check_site）。 */
+  site_state: {
+    state: string | null;
+    state_label: string | null;
+    confidence: number | null;
+    plateau_has_building: boolean | null;
+    verdict: string | null;
+    verdict_note: string | null;
+  } | null;
   photo_published: boolean;
   photo_note: string;
+};
+
+/** 敷地の現況コード → 短い日本語。 */
+const SITE_STATE_SHORT: Record<string, string> = {
+  under_construction: "工事中",
+  vacant: "更地",
+  has_building: "建物あり",
+  unknown: "判定できず",
 };
 
 type SamplesFile = {
@@ -457,7 +474,10 @@ export async function runSampleMode(
       {
         tone: "orange",
         when: posted ? `現地（看板 ${posted}）` : "現地",
-        what: "工事のお知らせ",
+        // 遠い写真でAIが判定した現況があればそれを出す（check_site）。
+        what: sample.site_state?.state
+          ? `${SITE_STATE_SHORT[sample.site_state.state] ?? "工事のお知らせ"}（遠い写真でAI判定）`
+          : "工事のお知らせ",
       },
       {
         tone: "blue",
@@ -867,8 +887,12 @@ export async function runSampleMode(
       if (step.thought) right.appendChild(el("div", "thought", `「${step.thought}」`));
       if (step.detail) {
         const detail = el("div", "detail");
-        // 不一致だけオレンジで出す（dev-policy §10）
-        if (step.detail.includes("不一致") || step.failed) {
+        // 不一致・PLATEAU未反映はオレンジで出す（注意色。dev-policy §10）
+        if (
+          step.detail.includes("不一致") ||
+          step.detail.includes("未反映") ||
+          step.failed
+        ) {
           detail.classList.add("mm");
         }
         detail.textContent = step.detail;

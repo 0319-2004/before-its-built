@@ -219,35 +219,140 @@ HEIGHT_HINT = """高さの欄は「高さ ○m（塔屋等まで ○m、軒高 �
 上段の数値（カッコの外）が height_m、カッコ内の「塔屋等まで」が max_height_m、
 カッコ内の「軒高」が eave_height_m。必ず 軒高 ≤ 高さ ≤ 塔屋等まで の順になる。"""
 
+# 住居表示（address）・地名地番（lot）は fields ではなく別のブロックなので、
+# 読み直しの形も別にする。届出と食い違ったときにここを読み直せるようにする
+# （No.60 で看板3枚が「1番」、届出の読み取りは「19番」だった例）。
+BLOCK_LABELS = {
+    "address": "住居表示（町丁目・街区番号・号）",
+    "lot": "地名地番（筆の番号）",
+}
+
+REREAD_BLOCK_PROMPT = """これは日本の工事現場に掲示される「建築計画のお知らせ」の看板の画像です。
+この看板を一度読み取ったところ、次の確認が必要になりました。
+
+{issues}
+
+そこで、下の部分だけをもう一度、注意して読み直してください。
+
+{which}
+
+JSONだけを返してください。前置きやコードブロックは付けないでください。
+読み直す部分だけを入れてください。
+
+返す形:
+{{
+  "lot": {{"status": "read"|"absent"|"unreadable"|"masked", "confidence": 0.0〜1.0,
+           "raw": 地名地番の部分の文字そのまま, "area": 地番より前の地名,
+           "parcels": [{{"number": "502-4", "partial": false}}], "has_others": false}},
+  "address": {{"status": "read"|"absent"|"unreadable"|"masked", "confidence": 0.0〜1.0,
+               "raw": 住居表示の部分の文字そのまま（例: "3丁目17番"）,
+               "chome": 町丁目（例: "上目黒三丁目"）, "block": 街区番号の数字だけ,
+               "go": 号の数字だけ（なければ null）}}
+}}
+
+ルール:
+- 矛盾や食い違いを解消するために値を作らない。看板に書いてあるとおりに読む。
+- 地番（筆の番号）と住居表示は別のものなので、必ず分けて取る。
+  同じ欄に併記されていても、"lot" には地名地番だけ、"address" には住居表示だけを入れる。
+- 読み直しても読めなければ status を "unreadable" にする。
+- 建築主・設計者・施工者・連絡先の氏名、住所、電話番号は一切出力しない。
+"""
+
+
+def merge_block(old: dict, new: dict) -> dict:
+    """読み直したブロックを採り入れるが、**より詳しい値を捨てない**ようにする。
+
+    読み直し（medium）は切り出しの都合で町丁目を短く読むことがある
+    （「中目黒三丁目」→「三丁目」）。新しい値が古い値の一部でしかないときは、
+    古いほうを残す。狙いの街区番号などは新しい値で更新される。
+    """
+    merged = dict(new)
+    for key, old_val in old.items():
+        if key == "first_read":
+            continue
+        new_val = new.get(key)
+        if new_val in (None, "", []):
+            merged[key] = old_val  # 新しい側が空なら古い値を残す
+        elif (isinstance(old_val, str) and isinstance(new_val, str)
+              and new_val in old_val and len(new_val) < len(old_val)):
+            merged[key] = old_val  # 新しい側が古い値の一部（短く読んだ）なら古い値を残す
+    return merged
+
+
+def block_summary(name: str, block: dict | None) -> str | None:
+    """住居表示・地名地番を短い文字列にする（読み直しの前後を比べる・記録する用）。"""
+    if not block:
+        return None
+    if name == "address":
+        if block.get("raw"):
+            return block["raw"]
+        parts = [block.get("chome")]
+        if block.get("block") is not None:
+            parts.append(f"{block['block']}番")
+        if block.get("go") is not None:
+            parts.append(f"{block['go']}号")
+        return "".join(str(p) for p in parts if p) or None
+    parcels = [p.get("number") for p in (block.get("parcels") or []) if p.get("number")]
+    return "、".join(parcels) or block.get("raw")
+
+
+# 読み直せるもの：通常の項目に加えて、住居表示（address）と地名地番（lot）のブロック。
+REREADABLE = set(FIELDS) | set(BLOCK_LABELS)
+
 
 def reread(image_path: Path, result: dict, issues: list[dict]) -> dict | None:
-    """検算で引っかかった項目だけを、推論の強さ medium で読み直す（dev-policy §3）。
+    """検算や届出との食い違いで引っかかった項目を、推論の強さ medium で読み直す（dev-policy §3）。
 
-    読み直した結果で `result` の該当項目を差し替え、元の値は `first_read` に残す。
-    何を読み直して何が変わったかを返す（読み直す項目がなければ None）。
+    読み直せるのは通常の項目（FIELDS）と、住居表示（address）・地名地番（lot）の
+    ブロック。読み直した結果で `result` の該当箇所を差し替え、元の値は `first_read` に残す。
+    何を読み直して何が変わったかを返す（読み直す対象がなければ None）。
     """
-    names = sorted({name for issue in issues for name in issue["fields"]} & set(FIELDS))
+    names = sorted({name for issue in issues for name in issue["fields"]} & REREADABLE)
     if not names:
         return None
 
-    prompt = REREAD_PROMPT.format(
-        issues="\n".join(f"- {issue['message']}" for issue in issues),
-        fields=json.dumps({n: FIELDS[n] for n in names}, ensure_ascii=False, indent=2),
-        heights=HEIGHT_HINT if any(n.endswith("height_m") for n in names) else "",
-    )
-    second = apply_normalization(ask(image_path, prompt, "medium")).get("fields") or {}
-
-    fields = result.setdefault("fields", {})
+    field_names = [n for n in names if n in FIELDS]
+    block_names = [n for n in names if n in BLOCK_LABELS]
+    issue_text = "\n".join(f"- {issue['message']}" for issue in issues)
     changed = {}
-    for name in names:
-        new = second.get(name)
-        if not isinstance(new, dict) or "value" not in new:
-            continue
-        old = fields.get(name) or {}
-        if old.get("value") != new.get("value"):
-            changed[name] = {"from": old.get("value"), "to": new.get("value")}
-        new["first_read"] = {k: old.get(k) for k in ("value", "status", "confidence")}
-        fields[name] = new
+
+    if field_names:
+        prompt = REREAD_PROMPT.format(
+            issues=issue_text,
+            fields=json.dumps({n: FIELDS[n] for n in field_names},
+                              ensure_ascii=False, indent=2),
+            heights=HEIGHT_HINT if any(n.endswith("height_m") for n in field_names) else "",
+        )
+        second = apply_normalization(ask(image_path, prompt, "medium")).get("fields") or {}
+        fields = result.setdefault("fields", {})
+        for name in field_names:
+            new = second.get(name)
+            if not isinstance(new, dict) or "value" not in new:
+                continue
+            old = fields.get(name) or {}
+            if old.get("value") != new.get("value"):
+                changed[name] = {"from": old.get("value"), "to": new.get("value")}
+            new["first_read"] = {k: old.get(k) for k in ("value", "status", "confidence")}
+            fields[name] = new
+
+    if block_names:
+        prompt = REREAD_BLOCK_PROMPT.format(
+            issues=issue_text,
+            which="、".join(BLOCK_LABELS[n] for n in block_names),
+        )
+        second = apply_normalization(ask(image_path, prompt, "medium"))
+        for name in block_names:
+            new = second.get(name)
+            if not isinstance(new, dict):
+                continue
+            old = result.get(name) or {}
+            before = block_summary(name, old)
+            merged = merge_block(old, new)
+            after = block_summary(name, merged)
+            if before != after:
+                changed[name] = {"from": before, "to": after}
+            merged["first_read"] = before
+            result[name] = merged
 
     return {"effort": "medium", "reason": "consistency",
             "fields": names, "changed": changed}

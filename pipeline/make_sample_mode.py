@@ -75,9 +75,16 @@ TOOL_LABELS = {
     "lookup_filing": "区の届出と照合する",
     "geocode": "住居表示を座標にする",
     "extrude": "ボリュームを作る",
+    "check_site": "遠い写真で敷地の現況を確かめる",
     "request_retake": "撮り直しを頼む",
     "finish": "結論を出す",
 }
+
+# デモの主役。No.55（IMG_3997）は check_site で「PLATEAU未反映」が出て、
+# 既存建物が消えて16階建てが立ち上がる、ひと通りの流れを見せられる（§10）。
+HERO_ID = "IMG_3997"
+# 並び順（主役→3Dが立つもの→注意→撮り直し）。審査員が最初に見るものを3D有りにする。
+OUTCOME_RANK = {"built": 0, "mismatch_notified": 1, "needs_review": 2, "needs_retake": 3}
 
 
 # ---------- 名前を落とす ----------
@@ -220,6 +227,20 @@ def step_detail(step: dict) -> str:
                     f"（底面 {out['base_z_m']}m → 天面 {out['top_z_m']}m、楕円体高）")
         return "作れなかった"
 
+    if tool == "check_site":
+        state = out.get("state_label") or out.get("state")
+        plateau = out.get("plateau") or {}
+        has = plateau.get("has_building")
+        verdict = (out.get("verdict") or {}).get("verdict")
+        text = f"遠い敷地写真の現況: {state}"
+        if has is not None:
+            text += f"／PLATEAU（2021年調査）は{'建物あり' if has else '建物なし'}"
+        if verdict == "plateau_outdated":
+            text += " → PLATEAU未反映（3D都市モデルが数年遅れ）"
+        elif verdict == "plateau_missing":
+            text += " → PLATEAUに無い建物・工事"
+        return text
+
     if tool == "request_retake":
         return (step.get("input") or {}).get("reason") or "撮り直しを頼んだ"
     if tool == "finish":
@@ -250,6 +271,24 @@ def augment_volume(volume: dict | None) -> dict | None:
     # 既存建物（なければ None）。置き換わるアニメで「オレンジになって沈む」もの。
     volume["existing"] = o["existing"]
     return volume
+
+
+def published_site_state(record: dict) -> dict | None:
+    """check_site の結果のうち公開してよいものだけ（写真のパス image は出さない）。"""
+    ss = record.get("site_state")
+    if not ss:
+        return None
+    photo = ss.get("photo_state") or {}
+    plateau = ss.get("plateau") or {}
+    verdict = ss.get("verdict") or {}
+    return {
+        "state": photo.get("state"),
+        "state_label": photo.get("state_label"),
+        "confidence": photo.get("confidence"),
+        "plateau_has_building": plateau.get("has_building"),
+        "verdict": verdict.get("verdict"),
+        "verdict_note": verdict.get("note"),
+    }
 
 
 def build_sample(record: dict, names: set[str]) -> dict:
@@ -287,6 +326,8 @@ def build_sample(record: dict, names: set[str]) -> dict:
         "filing_verified": record.get("filing_verified"),
         "status_label": None,
         "values": values,
+        # 遠い写真でAIが判定した敷地の現況と、PLATEAU（2021）とのずれ（check_site）
+        "site_state": published_site_state(record),
         "steps": steps,
         "volume": augment_volume(record.get("volume")),
         "boards_found": record.get("boards_found"),
@@ -367,6 +408,10 @@ def main():
 
     samples = [build_sample(json.loads(p.read_text(encoding="utf-8")), names)
                for p in records]
+    # デモの主役（No.55）を先頭に。次は3Dが立つもの→注意→撮り直しの順にして、
+    # 審査員が最初に開く件が「未反映の検出→既存建物が消えて立ち上がる」になるようにする。
+    samples.sort(key=lambda s: (s["id"] != HERO_ID,
+                                OUTCOME_RANK.get(s["outcome"], 9), s["id"]))
 
     data = {
         "generated": date.today().isoformat(),
