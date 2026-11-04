@@ -274,10 +274,15 @@ const CSS = `
   backdrop-filter: blur(14px);
   box-shadow: 0 18px 50px rgba(0,0,0,0.55);
 }
-#shadow-study .row { display: flex; align-items: baseline; gap: 8px; }
+#shadow-study .row { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
 #shadow-study .row h2 { margin: 0; font-size: 13px; font-weight: 600; }
 #shadow-study .row h2 b { color: #9fb0c6; font-weight: 600; }
 #shadow-study .val { margin-left: auto; font-variant-numeric: tabular-nums; color: #cfd6e0; }
+#shadow-study .chev { color: #9fb0c6; font-size: 11px; line-height: 1; transition: transform .15s; }
+/* 折りたたみ: ヘッダをタップで本体を開閉する（既定は閉じて、下のトグルを隠さない）。 */
+#shadow-study.collapsed .chev { transform: rotate(-90deg); }
+#shadow-study.collapsed .panel { width: auto; }
+#shadow-study.collapsed .body { display: none; }
 #shadow-study input[type=range] { width: 100%; margin: 9px 0 6px; accent-color: #6ea8ff; }
 #shadow-study .ticks { display: flex; justify-content: space-between; font-size: 10px; color: #78808d; }
 #shadow-study .note { margin: 8px 0 0; font-size: 10.5px; color: #8e97a4; }
@@ -368,15 +373,25 @@ export function addShadowStudy(
   panel.className = "panel";
   root.appendChild(panel);
 
+  // ヘッダ（タップで開閉）。閉じると下の「PLATEAUのまま／看板で更新した街」トグルを塞がない。
   const row = document.createElement("div");
   row.className = "row";
   const h2 = document.createElement("h2");
   h2.innerHTML = "日影 <b>（冬至）</b>";
   const val = document.createElement("span");
   val.className = "val";
+  const chev = document.createElement("span");
+  chev.className = "chev";
+  chev.textContent = "▾";
   row.appendChild(h2);
   row.appendChild(val);
+  row.appendChild(chev);
   panel.appendChild(row);
+
+  // 本体（スライダー・目盛り・タップ案内・注記）。折りたたみ対象。
+  const body = document.createElement("div");
+  body.className = "body";
+  panel.appendChild(body);
 
   const slider = document.createElement("input");
   slider.type = "range";
@@ -384,25 +399,29 @@ export function addShadowStudy(
   slider.max = String(SHADOW_HOUR_MAX);
   slider.step = "0.25";
   slider.value = String(hours);
-  panel.appendChild(slider);
+  body.appendChild(slider);
 
   const ticks = document.createElement("div");
   ticks.className = "ticks";
   ticks.innerHTML = "<span>8時</span><span>10時</span><span>12時</span><span>14時</span><span>16時</span>";
-  panel.appendChild(ticks);
+  body.appendChild(ticks);
 
   // 「あなたの家」：地図をタップすると、その地点が日影に入る時間が出る。
   const tap = document.createElement("div");
   tap.className = "tap";
   tap.textContent = "地図をタップすると、その地点（地上1.5m）が冬至に日影へ入る時間が出ます。";
-  panel.appendChild(tap);
+  body.appendChild(tap);
 
   const note = document.createElement("p");
   note.className = "note";
   note.innerHTML =
     "<b>法令上の日影規制の判定ではない目安です。</b>" +
     "冬至・地上1.5m・建物は直方体で近似しています。";
-  panel.appendChild(note);
+  body.appendChild(note);
+
+  // 既定は閉じておく（開くとトグルを覆うため）。ヘッダのタップで開閉。
+  root.classList.add("collapsed");
+  row.addEventListener("click", () => root.classList.toggle("collapsed"));
 
   document.body.appendChild(root);
 

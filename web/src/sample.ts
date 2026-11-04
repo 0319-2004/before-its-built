@@ -195,6 +195,15 @@ const CSS = `
 }
 #sample .chip:hover { background: rgba(255,255,255,0.1); }
 #sample .chip[aria-pressed="true"] { border-color: #2d7dff; background: rgba(45,125,255,0.2); color: #fff; }
+/* 「対象外の看板」は同じ表示が続くので、既定で畳んでおく（ヘッダのタップで開閉）。 */
+#sample .chips-sep {
+  width: 100%; margin: 7px 2px 1px; font-size: 11px; color: #9aa3b0;
+  cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px;
+}
+#sample .chips-sep .chev { font-size: 10px; color: #78808d; transition: transform .15s; }
+#sample .others { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+#sample .others.collapsed { display: none; }
+#sample .chip.muted { opacity: 0.62; }
 #sample .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 #sample .dot.blue { background: #2d7dff; }
 #sample .dot.orange { background: #ff8c1a; }
@@ -271,8 +280,8 @@ const CSS = `
 #sample .timeline .arrow { align-self: center; color: #5c6782; font-size: 13px; padding: 0 1px; }
 /* 「PLATEAUのまま ⇄ 看板で更新した街」の切り替え。差分をその場で比べる。 */
 #sample .toggle {
-  position: absolute; bottom: 16px; left: calc(50% + 215px);
-  transform: translateX(-50%); pointer-events: auto;
+  position: absolute; bottom: 54px; right: 16px;
+  pointer-events: auto;
   display: inline-flex; padding: 4px; gap: 3px; border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.12); background: rgba(8,10,14,0.86);
   backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -287,7 +296,7 @@ const CSS = `
 #sample .toggle button.updated[aria-pressed="true"] { background: linear-gradient(180deg,#8fc0ff,#2d7dff); }
 @media (max-width: 860px) {
   #sample .timeline { display: none; } /* 狭い画面ではパネルと干渉するので隠す */
-  #sample .toggle { left: 50%; bottom: 10px; }
+  #sample .toggle { right: 10px; bottom: 48px; }
 }
 @media (max-width: 560px) {
   #sample { justify-content: flex-end; }
@@ -996,17 +1005,39 @@ export async function runSampleMode(
   }
 
   // --- 選ぶところ ---
-  for (const sample of data.samples) {
-    const chip = el("button", "chip");
+  // 建築計画のお知らせを先に並べ、同じ表示が続く「対象外の看板」は後ろに畳んでまとめる。
+  const makeChip = (sample: Sample, into: HTMLElement, muted: boolean) => {
+    const chip = el("button", muted ? "chip muted" : "chip");
     chip.type = "button";
     chip.dataset.id = sample.id;
     chip.setAttribute("aria-pressed", "false");
     chip.appendChild(el("span", `dot ${OUTCOME_STYLE[sample.outcome].tone}`));
-    chip.appendChild(
-      el("span", undefined, sample.label === "対象外の看板" ? "対象外の看板" : sample.label),
-    );
+    chip.appendChild(el("span", undefined, sample.label));
     chip.addEventListener("click", () => void open(sample));
-    chips.appendChild(chip);
+    into.appendChild(chip);
+  };
+  const OUT_LABEL = "対象外の看板";
+  // 同じ表示（同じ住所・用途）の重複は1つにまとめる（中目黒三丁目1番／共同住宅 ×3 など）。
+  // 同じ住居表示に複数の届出があっても一覧では代表1件だけ出す。
+  const seenLabel = new Set<string>();
+  const named = data.samples.filter(
+    (s) => s.label !== OUT_LABEL && !seenLabel.has(s.label) && (seenLabel.add(s.label), true),
+  );
+  const others = data.samples.filter((s) => s.label === OUT_LABEL);
+  for (const sample of named) makeChip(sample, chips, false);
+  if (others.length) {
+    const sep = el("div", "chips-sep");
+    sep.appendChild(el("span", undefined, `${OUT_LABEL}（${others.length}）`));
+    const chev = el("span", "chev", "▸");
+    sep.appendChild(chev);
+    chips.appendChild(sep);
+    const box = el("div", "others collapsed");
+    chips.appendChild(box);
+    for (const sample of others) makeChip(sample, box, true);
+    sep.addEventListener("click", () => {
+      const nowOpen = box.classList.toggle("collapsed") === false;
+      chev.textContent = nowOpen ? "▾" : "▸";
+    });
   }
 
   const first =
